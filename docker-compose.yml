@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # Sistema de Autenticación y Auditoría (Flask + MongoDB)
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://auth-db:27017/authdb
+    depends_on:
+      - auth-db
+
+  # Microservicio de Gestión de Archivos (Flask + Pandas)
+  file-management-service:
+    build: ./file-management-service
+    ports:
+      - "5001:5000"
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  # Microservicio de Auditoría (Flask + MongoDB)
+  audit-service:
+    build: ./audit-service
+    ports:
+      - "5002:5000"
+    environment:
+      - MONGO_URI=mongodb://audit-db:27017/auditdb
+    depends_on:
+      - audit-db
+
+  # Frontend (React)
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+
+  # Base de datos para autenticación y auditoría (MongoDB)
+  auth-db:
+    image: mongo:5.0
+    volumes:
+      - auth-db-data:/data/db
+
+  # Base de datos para auditoría
+  audit-db:
+    image: mongo:5.0
+    volumes:
+      - audit-db-data:/data/db
+
+volumes:
+  auth-db-data:
+  audit-db-data:
