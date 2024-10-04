@@ -1,21 +1,22 @@
 # Dockerfile para frontend
 
-FROM node:16
+FROM node:18
 
+# Cambia el directorio de trabajo al de la interfaz
 WORKDIR /app
 
-# Copiar package.json y package-lock.json
-COPY package.json package-lock.json ./
+# Copiar los archivos necesarios de la interfaz
+COPY interfaz/package.json interfaz/package-lock.json ./
 
 # Instalar dependencias
 RUN npm install
 
 # Copiar el resto del código de la aplicación
-COPY . .
+COPY interfaz .
 
 # Habilitar polling para cambios en archivos
-ENV CHOKIDAR_USEPOLLING=true
+ENV WATCHPACK_POLLING=true
 
 # Exponer el puerto y arrancar la aplicación
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["npm", "run", "start-watch"]
