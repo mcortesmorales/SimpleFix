@@ -1,11 +1,14 @@
 from flask import Flask
-from pymongo import MongoClient
+from flask_pymongo import PyMongo
+from flask_cors import CORS  # Importa CORS
+from app.config import Config
 
 app = Flask(__name__)
+app.config.from_object(Config)
 
-# Conexión a MongoDB
-client = MongoClient('mongodb://auth-db:27017/')
-db = client['authdb']
+# Habilita CORS
+CORS(app)
 
-from app.routes import auth_bp
-app.register_blueprint(auth_bp)
+mongo = PyMongo(app)
+
+from app import routes
