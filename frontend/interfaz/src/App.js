@@ -6,6 +6,7 @@ import AdminPanel from './pages/adminPanel';
 function App() {
   return (
     <div className="App">
+      <Login></Login>
       <AdminPanel></AdminPanel>
     </div>
   );
