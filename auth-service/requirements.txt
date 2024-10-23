@@ -1,2 +1,4 @@
 Flask==2.3.2
 pymongo==4.1.1
+Flask-PyMongo
+Flask-Cors
