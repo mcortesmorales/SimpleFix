@@ -1,19 +1,12 @@
-from app import mongo
+from flask_pymongo import PyMongo
+from flask_bcrypt import Bcrypt
 
-class UserModel:
-    @staticmethod
-    def create_user(user_data):
-        """Crea un nuevo usuario en la base de datos."""
-        return mongo.db.users.insert_one(user_data)
+mongo = PyMongo()
+bcrypt = Bcrypt()
 
-    @staticmethod
-    def get_user_by_userName(name):
-        """Obtiene un usuario por su correo electrónico."""
-        return mongo.db.users.find_one({"userName": name})
+def create_user(username, password):
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    mongo.db.users.insert_one({'username': username, 'password': hashed_password})
 
-    @staticmethod
-    def update_user(name, update_data):
-        """Actualiza un usuario basado en su email."""
-        return mongo.db.users.update_one(
-            {"userName": name}, {"$set": update_data}
-        )
+def get_user_by_username(username):
+    return mongo.db.users.find_one({'username': username})

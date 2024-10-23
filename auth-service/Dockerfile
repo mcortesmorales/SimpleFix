@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Establecer FLASK_APP y activar modo debug
-ENV FLASK_APP=app
+ENV FLASK_APP=app/app.py
 ENV FLASK_ENV=development
 ENV FLASK_DEBUG=1
 

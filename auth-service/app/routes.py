@@ -1,25 +1,31 @@
 from flask import Blueprint, request, jsonify
-from .models import UserModel
+from flask_jwt_extended import JWTManager, create_access_token
+from models import create_user, get_user_by_username, bcrypt
 
-user_bp = Blueprint('user_bp', __name__)
+auth_bp = Blueprint('auth', __name__)
+jwt = JWTManager()
 
-@user_bp.route('/users', methods=['POST'])
-def create_user():
-    user_data = request.json
-    UserModel.create_user(user_data)
-    return jsonify({"message": "Usuario creado exitosamente"}), 201
+@auth_bp.route('/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
 
-@user_bp.route('/users/<email>', methods=['GET'])
-def get_user(email):
-    user = UserModel.get_user_by_email(email)
-    if user:
-        return jsonify(user), 200
-    return jsonify({"message": "Usuario no encontrado"}), 404
+    if get_user_by_username(username):
+        return jsonify({'message': 'User already exists!'}), 400
 
-@user_bp.route('/users/<email>', methods=['PUT'])
-def update_user(email):
-    update_data = request.json
-    result = UserModel.update_user(email, update_data)
-    if result.matched_count > 0:
-        return jsonify({"message": "Usuario actualizado exitosamente"}), 200
-    return jsonify({"message": "Usuario no encontrado"}), 404
+    create_user(username, password)
+    return jsonify({'message': 'User created successfully!'}), 201
+
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    user = get_user_by_username(username)
+    if user and bcrypt.check_password_hash(user['password'], password):
+        access_token = create_access_token(identity=username)
+        return jsonify(access_token=access_token), 200
+
+    return jsonify({'message': 'Invalid credentials!'}), 401
