@@ -1,17 +1,24 @@
 import React, { useState } from 'react';
+import { useAuth } from '../AuthContext';
 import axios from 'axios';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await axios.post('http://localhost:5000/auth/login', { username, password });
-      console.log(response.data.message);
+      const { access_token } = response.data;
+
+      // Actualiza el contexto de autenticación
+      login(username, access_token);
+
+      console.log('Login successful!');
     } catch (error) {
-      console.error(error.response.data.message);
+      console.error(error.response?.data?.message || 'Error logging in');
     }
   };
 
