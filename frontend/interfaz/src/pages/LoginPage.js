@@ -5,10 +5,12 @@ import axios from 'axios';
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState(''); // Estado para el mensaje de error
   const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage(''); // Reinicia el mensaje de error al intentar de nuevo
     try {
       const response = await axios.post('http://localhost:5000/auth/login', { username, password });
       const { access_token } = response.data;
@@ -18,7 +20,9 @@ const LoginPage = () => {
 
       console.log('Login successful!');
     } catch (error) {
-      console.error(error.response?.data?.message || 'Error logging in');
+      const errorMsg = error.response?.data?.message || 'Error al iniciar sesión';
+      setErrorMessage(errorMsg); // Guarda el mensaje de error en el estado
+      console.error(errorMsg);
     }
   };
 
@@ -49,6 +53,11 @@ const LoginPage = () => {
               required
             />
           </div>
+          {errorMessage && (
+            <div className="alert alert-danger" role="alert">
+              {errorMessage}
+            </div>
+          )}
           <button type="submit" className="btn btn-primary w-100">Iniciar Sesión</button>
         </form>
       </div>
