@@ -21,12 +21,15 @@ services:
     ports:
       - "5001:5000"
     environment:
+      - MONGO_URI=mongodb://file-db:27017/filedb  # Agregar MongoDB específico para gestión de archivos
       - PYTHONUNBUFFERED=1
       - FLASK_ENV=development  # Modo desarrollo
       - FLASK_APP=app.py
       - FLASK_DEBUG=1  # Habilitar debug
     volumes:
       - ./file-management-service:/app
+    depends_on:
+      - file-db  # Dependencia para que el servicio espere a que MongoDB esté listo
 
   # Microservicio de Auditoría (Flask + MongoDB)
   audit-service:
@@ -55,7 +58,6 @@ services:
       - WATCHPACK_POLLING=true
       - HOST=0.0.0.0
 
-
   # Base de datos para autenticación y auditoría (MongoDB)
   auth-db:
     image: mongo:5.0
@@ -68,6 +70,13 @@ services:
     volumes:
       - audit-db-data:/data/db
 
+  # Base de datos para el microservicio de gestión de archivos
+  file-db:
+    image: mongo:5.0
+    volumes:
+      - file-db-data:/data/db
+
 volumes:
   auth-db-data:
   audit-db-data:
+  file-db-data:
