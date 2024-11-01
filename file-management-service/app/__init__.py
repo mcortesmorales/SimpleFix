@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 # Configuración de MongoDB desde docker-compose
 app.config["MONGO_URI"] = "mongodb://file-db:27017/filedb"
-
+app.config['MAX_CONTENT_LENGTH'] = 300 * 1024 * 1024  # 200 MB
 # Inicializar la base de datos y almacenar en configuración de la aplicación
 app.mongo_db = init_db(app)
 
@@ -25,4 +25,5 @@ from app.routes import file_bp
 app.register_blueprint(file_bp)
 
 # Habilitar CORS
-CORS(app)
+CORS(app, origins=["http://localhost:3000"])
+

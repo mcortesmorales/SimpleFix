@@ -12,7 +12,7 @@ def extraer_turnos(archivo):
     turno_actual = {}
     en_turnos = False
 
-    for row in archivo:
+    for row in archivo.read().decode('utf-8').splitlines():  # Lee el archivo como texto
         row = row.strip()
         
         if row.startswith("Codigo horario  :"):
@@ -45,6 +45,7 @@ def extraer_turnos(archivo):
 
     return pd.DataFrame(turnos)
 
+
 @file_bp.route('/upload', methods=['POST'])
 @cross_origin()
 def upload_files():
@@ -61,6 +62,10 @@ def upload_files():
         
         # Procesar "HORARIOS CREADOS.csv"
         df_turnos = extraer_turnos(horarios_creados)
+
+        # Convertir ambas columnas de códigos a string para evitar conflictos de tipo
+        df_asignados['CODIGO HORARIO'] = df_asignados['CODIGO HORARIO'].astype(str)
+        df_turnos['codigo_horario'] = df_turnos['codigo_horario'].astype(str)
 
         # Unificar los datos en un solo DataFrame
         df_unificado = df_asignados.merge(
@@ -95,3 +100,18 @@ def upload_files():
         return jsonify({"error": f"Error al almacenar datos en MongoDB: {str(e)}"}), 500
 
     return jsonify({"message": "Datos procesados y almacenados correctamente"}), 201
+
+@file_bp.route('/trabajadores', methods=['GET'])
+@cross_origin()
+def get_trabajadores():
+    try:
+        # Obtener los primeros 10 documentos de la colección "trabajadores"
+        trabajadores = list(current_app.mongo_db.trabajadores.find().limit(10))
+        
+        # Transformar los documentos a un formato más limpio
+        for trabajador in trabajadores:
+            trabajador['_id'] = str(trabajador['_id'])  # Convertir ObjectId a string
+        
+        return jsonify(trabajadores), 200
+    except Exception as e:
+        return jsonify({"error": f"Error al obtener documentos de MongoDB: {str(e)}"}), 500
