@@ -36,3 +36,13 @@
     transform: rotate(360deg);
   }
 }
+
+.rut-link {
+  color: blue; /* Cambia el color a azul */
+  text-decoration: underline; /* Subraya el texto para que parezca un enlace */
+  cursor: pointer; /* Cambia el cursor al pasar el mouse, indicando que es clickable */
+}
+
+.rut-link:hover {
+  color: darkblue; /* Cambia el color al pasar el mouse */
+}

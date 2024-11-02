@@ -3,3 +3,4 @@ pandas==1.5.3
 pymongo==4.1.1
 numpy==1.23.0
 flask-cors
+Flask-PyMongo

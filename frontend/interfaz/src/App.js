@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import AdminPanel from './pages/adminPanel';
 import Header from './components/Header';
 import FileUploadPage from './components/FileUploadPage';
+import Trabajadores from './pages/Trabajadores';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './AuthContext';
 import PrivateRoute from './components/PrivateRoute';
@@ -18,6 +19,7 @@ function App() {
         <Routes>
           <Route path="/subir" element={<FileUploadPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/trabajadores" element={<Trabajadores/>} />
           <Route
             path="/admin"
             element={

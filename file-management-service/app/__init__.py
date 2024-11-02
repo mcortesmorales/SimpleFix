@@ -3,6 +3,7 @@
 from flask import Flask
 from flask_cors import CORS
 from app.database import init_db
+from flask_pymongo import PyMongo
 
 # Inicializar la aplicación Flask
 app = Flask(__name__)
@@ -27,3 +28,4 @@ app.register_blueprint(file_bp)
 # Habilitar CORS
 CORS(app, origins=["http://localhost:3000"])
 
+mongo = PyMongo(app)

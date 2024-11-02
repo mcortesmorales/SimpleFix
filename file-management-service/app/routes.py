@@ -1,18 +1,17 @@
-# app/routes.py
-
 from flask import Blueprint, request, jsonify, current_app
 import pandas as pd
 from flask_cors import cross_origin
+from bson import ObjectId
 
 file_bp = Blueprint('file', __name__)
 
-# Función para extraer turnos desde "HORARIOS CREADOS.csv"
-def extraer_turnos(archivo):
+# Función para extraer los turnos desde el CSV "HORARIOS CREADOS.csv"
+def extraer_turnos(file):
     turnos = []
     turno_actual = {}
     en_turnos = False
 
-    for row in archivo.read().decode('utf-8').splitlines():  # Lee el archivo como texto
+    for row in file.read().decode('utf-8').splitlines():
         row = row.strip()
         
         if row.startswith("Codigo horario  :"):
@@ -45,9 +44,30 @@ def extraer_turnos(archivo):
 
     return pd.DataFrame(turnos)
 
+# Cargar y procesar el archivo "HORARIOS_ASIGNADOS_MODIFICADO.csv"
+def cargar_horarios_asignados(file):
+    return pd.read_csv(file)
 
+# Crear el DataFrame unificado, sin eliminar duplicados de RUT + CODIGO HORARIO
+def unir_datos(turnos_df, asignados_df):
+    # Convertir ambas columnas de códigos a string
+    turnos_df['codigo_horario'] = turnos_df['codigo_horario'].astype(str)
+    asignados_df['CODIGO HORARIO'] = asignados_df['CODIGO HORARIO'].astype(str)
+    
+    # Realizar la unión
+    df_unido = asignados_df.merge(turnos_df, left_on=['CODIGO HORARIO', 'HORARIO ASIGNADO'],
+                                  right_on=['codigo_horario', 'nombre_horario'], how='left')
+    
+    # Eliminar duplicados basados en RUT y CODIGO HORARIO, conservando solo la primera ocurrencia
+    df_unido = df_unido.drop_duplicates(subset=['RUT', 'CODIGO HORARIO'])
+    
+    # Eliminar las columnas adicionales de la unión para simplificar el resultado
+    df_unido.drop(['codigo_horario', 'nombre_horario'], axis=1, inplace=True)
+    
+    return df_unido
+
+# Endpoint para subir los archivos
 @file_bp.route('/upload', methods=['POST'])
-@cross_origin()
 def upload_files():
     if 'horarios_asignados' not in request.files or 'horarios_creados' not in request.files:
         return jsonify({"error": "Ambos archivos 'horarios_asignados' y 'horarios_creados' son necesarios"}), 400
@@ -55,63 +75,84 @@ def upload_files():
     # Cargar archivos CSV
     horarios_asignados = request.files['horarios_asignados']
     horarios_creados = request.files['horarios_creados']
-    
+
+    # Limpiar la colección de trabajadores antes de la nueva carga
     try:
-        # Cargar y procesar "HORARIOS_ASIGNADOS_MODIFICADO.csv"
-        df_asignados = pd.read_csv(horarios_asignados)
-        
-        # Procesar "HORARIOS CREADOS.csv"
-        df_turnos = extraer_turnos(horarios_creados)
-
-        # Convertir ambas columnas de códigos a string para evitar conflictos de tipo
-        df_asignados['CODIGO HORARIO'] = df_asignados['CODIGO HORARIO'].astype(str)
-        df_turnos['codigo_horario'] = df_turnos['codigo_horario'].astype(str)
-
-        # Unificar los datos en un solo DataFrame
-        df_unificado = df_asignados.merge(
-            df_turnos,
-            left_on=['CODIGO HORARIO', 'HORARIO ASIGNADO'],
-            right_on=['codigo_horario', 'nombre_horario'],
-            how='left'
-        ).drop_duplicates(subset=['RUT', 'CODIGO HORARIO'])
-
+        current_app.mongo_db.trabajadores.delete_many({})  # Elimina todos los documentos
     except Exception as e:
-        return jsonify({"error": f"Error al procesar archivos CSV: {str(e)}"}), 400
+        return jsonify({"error": f"Error al limpiar la base de datos: {str(e)}"}), 500
 
-    # Guardar en MongoDB
+    # Extraer y unir datos
+    turnos_df = extraer_turnos(horarios_creados)
+    asignados_df = cargar_horarios_asignados(horarios_asignados)
+    df_unificado = unir_datos(turnos_df, asignados_df)
+
+    # Convertir DataFrame a diccionarios para MongoDB con la estructura deseada
+    trabajadores_data = []
+    for index, row in df_unificado.iterrows():
+        trabajador_documento = {
+            "RUT": row['RUT'],
+            "DV": row['DV'],
+            "codigo_horario": row['CODIGO HORARIO'],
+            "horario_asignado": row['HORARIO ASIGNADO'],
+            "turnos": row['días']  # Incluye todos los días y horarios extraídos
+        }
+        trabajadores_data.append(trabajador_documento)
+
+    # Insertar en la colección 'trabajadores' de MongoDB
     try:
-        for _, row in df_unificado.iterrows():
-            empleado = {
-                "RUT": row['RUT'],
-                "DV": row['DV'],
-                "codigo_horario": row['CODIGO HORARIO'],
-                "horario_asignado": row['HORARIO ASIGNADO'],
-                "turnos": row['días']  # Incluye todos los días y horarios extraídos
-            }
-            
-            # Insertar cada RUT como un documento único en MongoDB
-            current_app.mongo_db.trabajadores.update_one(
-                {"RUT": row['RUT']},
-                {"$set": empleado},
-                upsert=True  # Inserta el documento si no existe
-            )
-
+        current_app.mongo_db.trabajadores.insert_many(trabajadores_data)
+        return jsonify({"message": "Datos subidos correctamente a MongoDB"}), 200
     except Exception as e:
-        return jsonify({"error": f"Error al almacenar datos en MongoDB: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
 
-    return jsonify({"message": "Datos procesados y almacenados correctamente"}), 201
 
-@file_bp.route('/trabajadores', methods=['GET'])
-@cross_origin()
-def get_trabajadores():
+# Endpoint para contar los trabajadores únicos en base a RUT + CODIGO HORARIO
+@file_bp.route('/trabajadores2/count', methods=['GET'])
+def contar_trabajadores():
     try:
-        # Obtener los primeros 10 documentos de la colección "trabajadores"
-        trabajadores = list(current_app.mongo_db.trabajadores.find().limit(10))
+        # Obtener el conteo de combinaciones únicas de RUT y CODIGO HORARIO
+        total_trabajadores = current_app.mongo_db.trabajadores.count_documents({})
         
-        # Transformar los documentos a un formato más limpio
-        for trabajador in trabajadores:
-            trabajador['_id'] = str(trabajador['_id'])  # Convertir ObjectId a string
-        
+        return jsonify({"total_trabajadores": total_trabajadores}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@file_bp.route('/trabajadores2', methods=['GET'])
+def obtener_trabajadores2():
+    try:
+        # Obtener todos los trabajadores desde MongoDB
+        trabajadores = list(current_app.mongo_db.trabajadores.find({}, {"_id": 0}))
         return jsonify(trabajadores), 200
     except Exception as e:
-        return jsonify({"error": f"Error al obtener documentos de MongoDB: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
+    
+@file_bp.route('/trabajadores', methods=['GET'])
+def obtener_trabajadores():
+    try:
+        # Obtener los parámetros de paginación
+        page = int(request.args.get('page', 1))  # Página actual
+        limit = int(request.args.get('limit', 10))  # Límites por página
+
+        # Calcular el número total de trabajadores
+        total_trabajadores = current_app.mongo_db.trabajadores.count_documents({})
+
+        # Calcular los trabajadores a devolver
+        trabajadores = list(current_app.mongo_db.trabajadores.find({}, {"_id": 0})
+                            .skip((page - 1) * limit)
+                            .limit(limit))
+
+        return jsonify({"trabajadores": trabajadores, "total": total_trabajadores}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@file_bp.route('/trabajadores/<string:rut>', methods=['GET'])
+def obtener_trabajador_por_rut(rut):
+    trabajador = current_app.mongo_db.trabajadores.find_one({'RUT': rut})
+    
+    if trabajador:
+        # Convierte el campo '_id' a cadena para que sea JSON serializable
+        trabajador['_id'] = str(trabajador['_id'])  
+        return jsonify(trabajador), 200
+    else:
+        return jsonify({'mensaje': 'Trabajador no encontrado'}), 404
