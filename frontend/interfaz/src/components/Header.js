@@ -26,7 +26,7 @@ const Header = () => {
         </Typography>
         <div>
           <Link to="/" style={{ color: 'white', marginRight: 16 }}>Inicio</Link>
-          <Link to="/subir" style={{ color: 'white', marginRight: 16 }}>Subir Archivos</Link>
+          <Link to="/file-drop" style={{ color: 'white', marginRight: 16 }}>Subir Archivos</Link>
           <Link to="/visualizacion" style={{ color: 'white', marginRight: 16 }}>Visualización</Link>
           {user?.role === 'Administrador' && (
             <Link to="/admin" style={{ color: 'white', marginRight: 16 }}>Panel de Administración</Link>
