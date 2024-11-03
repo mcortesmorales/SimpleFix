@@ -7,7 +7,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true); // Estado de carga
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,35 +19,42 @@ export const AuthProvider = ({ children }) => {
           headers: { Authorization: `Bearer ${storedToken}` },
         })
         .then(response => {
-          setUser(response.data.username); // Establece el usuario si el token es válido
-          setLoading(false); // Desactiva el estado de carga
+          // Asegúrate de que `response.data` incluya tanto `username` como `role`
+          setUser({ username: response.data.username, role: response.data.role });
         })
         .catch(() => {
           logout(); // Si el token es inválido, cierra la sesión
+        })
+        .finally(() => {
+          setLoading(false); // Asegúrate de que loading se establezca en false
         });
     } else {
-      setLoading(false); // Si no hay token, desactiva el estado de carga
+      setLoading(false);
     }
   }, []);
 
-  const login = (username, access_token) => {
+  const login = (username, access_token, role) => {
     setToken(access_token);
-    setUser(username);
+    setUser({ username, role });
     localStorage.setItem('token', access_token);
-    navigate('/admin');
+    navigate('/');
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
     localStorage.removeItem('token');
-    navigate('/login');
+    navigate('/login'); // Redirigir al login después de cerrar sesión
   };
 
   const isAuthenticated = () => !!token;
 
   if (loading) {
-    return null; // O mostrar un spinner de carga mientras se verifica la autenticación
+    return (
+      <h2>
+        Cargando . . .
+      </h2> // O muestra un spinner mientras se carga la información de autenticación
+    );
   }
 
   return (

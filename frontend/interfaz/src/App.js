@@ -6,26 +6,38 @@ import Header from './components/Header';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './AuthContext';
 import PrivateRoute from './components/PrivateRoute';
+import Home from './pages/Home';
+import SettingsPage from './pages/SettingsPage';
 
 function App() {
   return (
-    
-      <Router>
-        <AuthProvider>
+
+    <Router>
+      <AuthProvider>
+        <Header></Header>
         <Routes>
+          <Route
+            path="/"
+            element={
+              <PrivateRoute allowedRoles={['Administrador', 'Operador']}>
+                <Home />
+              </PrivateRoute>
+            }
+          />
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/admin"
             element={
               <PrivateRoute>
-                <AdminPanel />
+                <AdminPanel allowedRoles={['Administrador']}/>
               </PrivateRoute>
             }
           />
+          <Route path="/configuracion" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
         </Routes>
-        </AuthProvider>
-      </Router>
-    
+      </AuthProvider>
+    </Router>
+
   );
 }
 
