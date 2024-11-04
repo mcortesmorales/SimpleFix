@@ -18,12 +18,12 @@ jwt = JWTManager(app)
 
 def create_initial_user():
     # Datos del usuario inicial
+    print("niggers")
     initial_user = {
         "username": "admin",
         "password": bcrypt.generate_password_hash("123").decode("utf-8"),
         "role": "Administrador"
     }
-
     # Comprobar si el usuario ya existe
     existing_user = mongo.db.users.find_one({"username": initial_user["username"]})
     if not existing_user:
@@ -35,6 +35,8 @@ def create_initial_user():
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/auth')
-
+create_initial_user()
 if __name__ == '__main__':
+    
     app.run(debug=True)
+    
