@@ -1,158 +1,213 @@
-from flask import Blueprint, request, jsonify, current_app
-import pandas as pd
-from flask_cors import cross_origin
-from bson import ObjectId
+import os
+from flask import Blueprint, request, jsonify
+from models import allowed_file, save_file
+from config import Config
+import csv
+#import pandas as pd
+from datetime import datetime, timedelta
 
-file_bp = Blueprint('file', __name__)
+upload_bp = Blueprint('upload_bp', __name__)
 
-# Función para extraer los turnos desde el CSV "HORARIOS CREADOS.csv"
-def extraer_turnos(file):
-    turnos = []
-    turno_actual = {}
-    en_turnos = False
+# Suponiendo que tienes un directorio donde se guardan los archivos
+UPLOAD_FOLDER = Config.UPLOAD_FOLDER  # Cambia esta ruta al directorio donde guardas los archivos
 
-    for row in file.read().decode('utf-8').splitlines():
-        row = row.strip()
-        
-        if row.startswith("Codigo horario  :"):
-            if turno_actual:
-                turnos.append(turno_actual)
-                turno_actual = {}
-            
-            parts = row.split(';')
-            turno_actual['codigo_horario'] = parts[1].strip()
-            turno_actual['nombre_horario'] = parts[3].strip()
-            turno_actual['días'] = []
-            en_turnos = True
-        
-        elif en_turnos and len(row) > 0:
-            partes_dia = row.split(';')
-            if len(partes_dia) >= 6:
-                dia_info = {
-                    'dia': partes_dia[19].strip(),
-                    'hora_entrada': partes_dia[20].strip(),
-                    'hora_salida': partes_dia[21].strip(),
-                }
-                if dia_info['dia'] and dia_info['hora_entrada'] and dia_info['hora_salida']:
-                    turno_actual['días'].append(dia_info)
-        
-        elif en_turnos and row.startswith("MINISTERIO DE SALUD;"):
-            en_turnos = False
+def normalize_filename(filename):
+    # Normaliza el nombre del archivo reemplazando espacios por guiones bajos
+    return filename.replace(' ', '_')
 
-    if turno_actual:
-        turnos.append(turno_actual)
+@upload_bp.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'message': 'No se encontró ningún archivo'}), 400
 
-    return pd.DataFrame(turnos)
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'message': 'No se ha seleccionado ningún archivo'}), 400
 
-# Cargar y procesar el archivo "HORARIOS_ASIGNADOS_MODIFICADO.csv"
-def cargar_horarios_asignados(file):
-    return pd.read_csv(file)
+    if file and allowed_file(file.filename):
+        # Normaliza el nombre del archivo
+        normalized_filename = normalize_filename(file.filename)
+        file_path = os.path.join(UPLOAD_FOLDER, normalized_filename)
 
-# Crear el DataFrame unificado, sin eliminar duplicados de RUT + CODIGO HORARIO
-def unir_datos(turnos_df, asignados_df):
-    # Convertir ambas columnas de códigos a string
-    turnos_df['codigo_horario'] = turnos_df['codigo_horario'].astype(str)
-    asignados_df['CODIGO HORARIO'] = asignados_df['CODIGO HORARIO'].astype(str)
-    
-    # Realizar la unión
-    df_unido = asignados_df.merge(turnos_df, left_on=['CODIGO HORARIO', 'HORARIO ASIGNADO'],
-                                  right_on=['codigo_horario', 'nombre_horario'], how='left')
-    
-    # Eliminar duplicados basados en RUT y CODIGO HORARIO, conservando solo la primera ocurrencia
-    df_unido = df_unido.drop_duplicates(subset=['RUT', 'CODIGO HORARIO'])
-    
-    # Eliminar las columnas adicionales de la unión para simplificar el resultado
-    df_unido.drop(['codigo_horario', 'nombre_horario'], axis=1, inplace=True)
-    
-    return df_unido
+        # Verifica si el encabezado de sobrescritura está presente
+        overwrite = request.headers.get('Overwrite', 'false').lower() == 'true'
 
-# Endpoint para subir los archivos
-@file_bp.route('/upload', methods=['POST'])
-def upload_files():
-    if 'horarios_asignados' not in request.files or 'horarios_creados' not in request.files:
-        return jsonify({"error": "Ambos archivos 'horarios_asignados' y 'horarios_creados' son necesarios"}), 400
+        if os.path.exists(file_path) and not overwrite:
+            # Si el archivo existe y no hay solicitud de sobrescritura, retorna el 409
+            return jsonify({'message': 'El archivo ya existe. ¿Desea sobrescribirlo?', 'overwrite': True}), 409
 
-    # Cargar archivos CSV
-    horarios_asignados = request.files['horarios_asignados']
-    horarios_creados = request.files['horarios_creados']
-
-    # Limpiar la colección de trabajadores antes de la nueva carga
-    try:
-        current_app.mongo_db.trabajadores.delete_many({})  # Elimina todos los documentos
-    except Exception as e:
-        return jsonify({"error": f"Error al limpiar la base de datos: {str(e)}"}), 500
-
-    # Extraer y unir datos
-    turnos_df = extraer_turnos(horarios_creados)
-    asignados_df = cargar_horarios_asignados(horarios_asignados)
-    df_unificado = unir_datos(turnos_df, asignados_df)
-
-    # Convertir DataFrame a diccionarios para MongoDB con la estructura deseada
-    trabajadores_data = []
-    for index, row in df_unificado.iterrows():
-        trabajador_documento = {
-            "RUT": row['RUT'],
-            "DV": row['DV'],
-            "codigo_horario": row['CODIGO HORARIO'],
-            "horario_asignado": row['HORARIO ASIGNADO'],
-            "turnos": row['días']  # Incluye todos los días y horarios extraídos
-        }
-        trabajadores_data.append(trabajador_documento)
-
-    # Insertar en la colección 'trabajadores' de MongoDB
-    try:
-        current_app.mongo_db.trabajadores.insert_many(trabajadores_data)
-        return jsonify({"message": "Datos subidos correctamente a MongoDB"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-# Endpoint para contar los trabajadores únicos en base a RUT + CODIGO HORARIO
-@file_bp.route('/trabajadores2/count', methods=['GET'])
-def contar_trabajadores():
-    try:
-        # Obtener el conteo de combinaciones únicas de RUT y CODIGO HORARIO
-        total_trabajadores = current_app.mongo_db.trabajadores.count_documents({})
-        
-        return jsonify({"total_trabajadores": total_trabajadores}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@file_bp.route('/trabajadores2', methods=['GET'])
-def obtener_trabajadores2():
-    try:
-        # Obtener todos los trabajadores desde MongoDB
-        trabajadores = list(current_app.mongo_db.trabajadores.find({}, {"_id": 0}))
-        return jsonify(trabajadores), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    
-@file_bp.route('/trabajadores', methods=['GET'])
-def obtener_trabajadores():
-    try:
-        # Obtener los parámetros de paginación
-        page = int(request.args.get('page', 1))  # Página actual
-        limit = int(request.args.get('limit', 10))  # Límites por página
-
-        # Calcular el número total de trabajadores
-        total_trabajadores = current_app.mongo_db.trabajadores.count_documents({})
-
-        # Calcular los trabajadores a devolver
-        trabajadores = list(current_app.mongo_db.trabajadores.find({}, {"_id": 0})
-                            .skip((page - 1) * limit)
-                            .limit(limit))
-
-        return jsonify({"trabajadores": trabajadores, "total": total_trabajadores}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@file_bp.route('/trabajadores/<string:rut>', methods=['GET'])
-def obtener_trabajador_por_rut(rut):
-    trabajador = current_app.mongo_db.trabajadores.find_one({'RUT': rut})
-    
-    if trabajador:
-        # Convierte el campo '_id' a cadena para que sea JSON serializable
-        trabajador['_id'] = str(trabajador['_id'])  
-        return jsonify(trabajador), 200
+        # Guarda (o sobrescribe) el archivo ___________________________ esto se esta guardando en una carpeta junto con el codigo, ta como raaaaro
+        save_file(file, normalized_filename)
+        return jsonify({'message': 'Archivo subido y guardado correctamente', 'file_path': file_path}), 200
     else:
-        return jsonify({'mensaje': 'Trabajador no encontrado'}), 404
+        return jsonify({'message': 'Por favor, sube un archivo .txt'}), 400
+
+
+
+@upload_bp.route('/files', methods=['GET'])
+def list_files():
+    try:
+        files_info = []
+        for filename in os.listdir(UPLOAD_FOLDER):  # Itera sobre los archivos en el directorio
+            if allowed_file(filename):  # Filtra solo archivos permitidos
+                file_path = os.path.join(UPLOAD_FOLDER, filename)
+                # Obtiene la fecha de modificación
+                modification_time = os.path.getmtime(file_path)
+                # Convierte la fecha a un formato legible
+                files_info.append({
+                    'name': filename,
+                    'date': modification_time  # Guarda el timestamp
+                })
+        return jsonify({'files': files_info}), 200  # Envía la lista de archivos con información
+    except Exception as e:
+        return jsonify({'message': 'Error al listar los archivos', 'error': str(e)}), 500
+
+
+@upload_bp.route('/files/<filename>', methods=['DELETE'])
+def delete_file(filename):
+    try:
+        # Verifica si el archivo es permitido
+        if not allowed_file(filename):
+            return jsonify({'message': 'Tipo de archivo no permitido'}), 400
+
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+        # Verifica si el archivo existe
+        if os.path.exists(file_path):
+            os.remove(file_path)  # Elimina el archivo
+            return jsonify({'message': 'Archivo eliminado correctamente'}), 200
+        else:
+            return jsonify({'message': 'Archivo no encontrado'}), 404
+    except Exception as e:
+        return jsonify({'message': 'Error al eliminar el archivo', 'error': str(e)}), 500
+
+@upload_bp.route('/files/<filename>', methods=['GET'])
+def get_file_data(filename):
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    
+    if not os.path.exists(file_path):
+        return jsonify({'message': 'Archivo no encontrado'}), 404
+
+    marcajes = []
+    with open(file_path, 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            # Extrae las columnas relevantes
+            entrada_salida = "Entrada" if row[2] == "01" else "Salida"
+            rut = row[3]
+            hora = row[5]
+            minutos = row[6]
+            mes = row[7]
+            dia = row[8]
+            año = row[9]
+
+            marcajes.append({
+                'entrada_salida': entrada_salida,
+                'rut': rut,
+                'hora': f"{hora}:{minutos}",
+                'fecha': f"{dia}/{mes}/{año}"
+            })
+    
+    return jsonify(marcajes), 200
+
+
+# @upload_bp.route('/diagnose/<filename>', methods=['POST'])
+# def diagnose_duplicates(filename):
+#     file_path = os.path.join(UPLOAD_FOLDER, filename)
+#     if not os.path.exists(file_path):
+#         return jsonify({'message': 'Archivo no encontrado'}), 404
+
+#     df = pd.read_csv(file_path, header=None, names=[
+#         "id", "col2", "entrada_salida", "rut", "col5", "hora", "minuto", "mes", "dia", "anio",
+#         "col10", "col11", "col12", "col13", "col14", "col15", "col16", "col17", "col18", "col19"
+#     ])
+    
+#     # Convertir a timestamp para facilitar la comparación
+#     df["timestamp"] = df.apply(lambda row: datetime(
+#         row["anio"], row["mes"], row["dia"], row["hora"], row["minuto"]
+#     ), axis=1)
+
+#     # Ordenar por RUT y timestamp
+#     df.sort_values(by=["rut", "timestamp"], inplace=True)
+
+#     # Procesar duplicados
+#     adjusted_rows = []
+#     for i, row in df.iterrows():
+#         if i == 0:
+#             adjusted_rows.append({**row, "isDuplicate": False})
+#             continue
+        
+#         previous_row = adjusted_rows[-1]
+        
+#         # Chequear si es la misma persona y si la diferencia de tiempo es menor a 5 minutos
+#         if row["rut"] == previous_row["rut"] and row["entrada_salida"] == 1:
+#             time_difference = row["timestamp"] - previous_row["timestamp"]
+            
+#             if time_difference < timedelta(minutes=5):
+#                 # Marcar como duplicado
+#                 adjusted_rows[-1]["isDuplicate"] = True
+#                 adjusted_rows.append({**row, "isDuplicate": True})
+#                 continue
+            
+#         # Si no es un duplicado, simplemente agregar la fila original
+#         adjusted_rows.append({**row, "isDuplicate": False})
+
+#     marked_data = pd.DataFrame(adjusted_rows).to_dict(orient='records')
+#     duplicates_count = sum(row.get('isDuplicate', False) for row in marked_data)
+
+#     return jsonify({'markedData': marked_data, 'duplicatesCount': duplicates_count}), 200
+
+
+# @upload_bp.route('/repair/<filename>', methods=['POST'])
+# def repair_duplicates(filename):
+#     file_path = os.path.join(UPLOAD_FOLDER, filename)
+#     if not os.path.exists(file_path):
+#         return jsonify({'message': 'Archivo no encontrado'}), 404
+
+#     df = pd.read_csv(file_path, header=None, names=[
+#         "id", "col2", "entrada_salida", "rut", "col5", "hora", "minuto", "mes", "dia", "anio",
+#         "col10", "col11", "col12", "col13", "col14", "col15", "col16", "col17", "col18", "col19"
+#     ])
+    
+#     # Convertir a timestamp para facilitar la comparación
+#     df["timestamp"] = df.apply(lambda row: datetime(
+#         row["anio"], row["mes"], row["dia"], row["hora"], row["minuto"]
+#     ), axis=1)
+
+#     # Ordenar por RUT y timestamp
+#     df.sort_values(by=["rut", "timestamp"], inplace=True)
+
+#     # Procesar duplicados y crear una lista de filas ajustadas
+#     adjusted_rows = []
+#     for i, row in df.iterrows():
+#         if i == 0:
+#             adjusted_rows.append(row)
+#             continue
+        
+#         previous_row = adjusted_rows[-1]
+        
+#         if row["rut"] == previous_row["rut"] and row["entrada_salida"] == 1:
+#             time_difference = row["timestamp"] - previous_row["timestamp"]
+            
+#             if time_difference < timedelta(minutes=5):
+#                 # Ajustar el registro: convertir segunda marca de entrada en salida y crear nuevo registro de entrada
+#                 salida_row = row.copy()
+#                 salida_row["entrada_salida"] = 3  # Convertir a salida
+                
+#                 entrada_row = row.copy()  # Crear un nuevo registro de entrada con el mismo horario
+                
+#                 # Agregar los ajustes
+#                 adjusted_rows.append(salida_row)
+#                 adjusted_rows.append(entrada_row)
+#                 continue
+            
+#         adjusted_rows.append(row)
+
+#     # Convertir de nuevo a DataFrame
+#     adjusted_df = pd.DataFrame(adjusted_rows)
+
+#     # Guardar los resultados en un archivo nuevo
+#     repaired_file_path = os.path.join('ruta_a_tu_carpeta_de_reparacion', f'reparado_{filename}')
+#     adjusted_df.to_csv(repaired_file_path, index=False, header=False)
+
+#     return jsonify({'repairedData': adjusted_df.to_dict(orient='records')}), 200   

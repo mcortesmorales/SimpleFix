@@ -3,34 +3,47 @@ import './App.css';
 import LoginPage from './pages/LoginPage';
 import AdminPanel from './pages/adminPanel';
 import Header from './components/Header';
-import FileUploadPage from './components/FileUploadPage';
-import Trabajadores from './pages/Trabajadores';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider } from './AuthContext';
 import PrivateRoute from './components/PrivateRoute';
+import Home from './pages/Home';
+import SettingsPage from './pages/SettingsPage';
+import DropPage from './pages/dropPage';
+import RepairPage from './pages/RepairPage';
+import DupRepairPage from './pages/DupRepairPage';
+
 
 function App() {
   return (
+
     <Router>
       <AuthProvider>
-        {/* Renderiza Header en todas las páginas */}
-        <Header />
-        
+        <Header></Header>
         <Routes>
-          <Route path="/subir" element={<FileUploadPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/trabajadores" element={<Trabajadores/>} />
           <Route
-            path="/admin"
+            path="/"
             element={
-              <PrivateRoute>
-                <AdminPanel />
+              <PrivateRoute allowedRoles={['Administrador', 'Operador']}>
+                <Home />
               </PrivateRoute>
             }
           />
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/admin" element={
+              <PrivateRoute>
+                <AdminPanel allowedRoles={['Administrador']}/>
+              </PrivateRoute>
+            }
+          />
+          <Route path="/configuracion" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
+          <Route path="/file-drop" element={<PrivateRoute><DropPage /></PrivateRoute>} />
+          <Route path="/repair" element={<PrivateRoute><RepairPage /></PrivateRoute>} />
+          <Route path="/dup-repair" element={<PrivateRoute><DupRepairPage /></PrivateRoute>} />
         </Routes>
       </AuthProvider>
     </Router>
+
   );
 }
 

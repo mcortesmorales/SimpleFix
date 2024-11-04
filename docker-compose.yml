@@ -24,7 +24,6 @@ services:
       - MONGO_URI=mongodb://file-db:27017/filedb  # Agregar MongoDB específico para gestión de archivos
       - PYTHONUNBUFFERED=1
       - FLASK_ENV=development  # Modo desarrollo
-      - FLASK_APP=app.py
       - FLASK_DEBUG=1  # Habilitar debug
     volumes:
       - ./file-management-service:/app
