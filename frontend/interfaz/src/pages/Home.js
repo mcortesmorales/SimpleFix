@@ -9,9 +9,26 @@ const HomePage = () => {
   const navigate = useNavigate();
 
   const cards = [
-    { title: "Visualizar Marcajes", text: "Accede a un resumen detallado de los marcajes y posibles errores.", icon: <FaEye size={35} />, buttonText: "Ver" },
-    { title: "Subir Archivos de Marcaje", text: "Carga los archivos que contienen los datos de marcaje para su corrección y análisis.", icon: <FaUpload size={35} />, buttonText: "Subir Archivos" },
-    { title: "Corregir Errores", text: "Utiliza la herramienta para corregir los errores de marcaje en los datos.", icon: <FaWrench size={35} />, buttonText: "Corregir Ahora" },
+    { 
+      title: "Visualizar Marcajes", 
+      text: "Accede a un resumen detallado de los marcajes y posibles errores.", 
+      icon: <FaEye size={35} />, 
+      buttonText: "Ver" 
+    },
+    { 
+      title: "Subir Archivos de Marcaje", 
+      text: "Carga los archivos que contienen los datos de marcaje para su corrección y análisis.", 
+      icon: <FaUpload size={35} />, 
+      buttonText: "Subir Archivos", 
+      onClick: () => navigate('/file-drop') // Navega a la ruta /file-drop
+    },
+    { 
+      title: "Corregir Errores", 
+      text: "Utiliza la herramienta para corregir los errores de marcaje en los datos.", 
+      icon: <FaWrench size={35} />, 
+      buttonText: "Corregir Ahora", 
+      onClick: () => navigate('/repair')
+    },
   ];
 
   // Agrega la tarjeta de administración solo si el usuario es administrador

@@ -9,6 +9,9 @@ import PrivateRoute from './components/PrivateRoute';
 import Home from './pages/Home';
 import SettingsPage from './pages/SettingsPage';
 import DropPage from './pages/dropPage';
+import RepairPage from './pages/RepairPage';
+import DupRepairPage from './pages/DupRepairPage';
+
 
 function App() {
   return (
@@ -34,7 +37,9 @@ function App() {
             }
           />
           <Route path="/configuracion" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
-          <Route path="/file-drop" element={<DropPage />} />
+          <Route path="/file-drop" element={<PrivateRoute><DropPage /></PrivateRoute>} />
+          <Route path="/repair" element={<PrivateRoute><RepairPage /></PrivateRoute>} />
+          <Route path="/dup-repair" element={<PrivateRoute><DupRepairPage /></PrivateRoute>} />
         </Routes>
       </AuthProvider>
     </Router>
