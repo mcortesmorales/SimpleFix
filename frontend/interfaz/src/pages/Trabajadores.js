@@ -16,7 +16,7 @@ const Trabajadores = () => {
 
     useEffect(() => {
         const cargarTrabajadores = async () => {
-            const response = await axios.get(`http://localhost:5001/trabajadores?page=${pagina}&limit=${trabajadoresPorPagina}`);
+            const response = await axios.get(`http://localhost:5003/trabajadores?page=${pagina}&limit=${trabajadoresPorPagina}`);
             setTrabajadores(response.data.trabajadores || []);
             setTotalTrabajadores(response.data.total);
         };
@@ -27,7 +27,7 @@ const Trabajadores = () => {
         e.preventDefault();
         setMensajeError(''); // Limpiar mensaje anterior
         try {
-            const response = await axios.get(`http://localhost:5001/trabajadores/${rut}`);
+            const response = await axios.get(`http://localhost:5003/trabajadores/${rut}`);
             setTrabajadores(response.data ? [response.data] : []);
             setTotalTrabajadores(response.data ? 1 : 0);
             setPagina(1); // Reinicia la paginación al buscar
