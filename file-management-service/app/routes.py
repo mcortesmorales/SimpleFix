@@ -4,7 +4,7 @@ from models import allowed_file, save_file
 from config import Config
 import csv
 from flask import send_file
-#import pandas as pd
+import pandas as pd
 from datetime import datetime, timedelta
 
 upload_bp = Blueprint('upload_bp', __name__)
@@ -94,7 +94,7 @@ def get_file_data(filename):
         reader = csv.reader(file)
         for row in reader:
             # Extrae las columnas relevantes
-            entrada_salida = "Entrada" if row[2] == "01" else "Salida"
+            entrada_salida = "Entrada" if (row[2] == "01" or row[2] == 1) else "Salida"
             rut = row[3]
             hora = row[5]
             minutos = row[6]
@@ -123,103 +123,104 @@ def download_file(filename):
     return send_file(file_path, as_attachment=True), 200
 
 
-# @upload_bp.route('/diagnose/<filename>', methods=['POST'])
-# def diagnose_duplicates(filename):
-#     file_path = os.path.join(UPLOAD_FOLDER, filename)
-#     if not os.path.exists(file_path):
-#         return jsonify({'message': 'Archivo no encontrado'}), 404
+@upload_bp.route('/diagnose/<filename>', methods=['POST'])
+def diagnose_duplicates(filename):
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    if not os.path.exists(file_path):
+        return jsonify({'message': 'Archivo no encontrado'}), 404
 
-#     df = pd.read_csv(file_path, header=None, names=[
-#         "id", "col2", "entrada_salida", "rut", "col5", "hora", "minuto", "mes", "dia", "anio",
-#         "col10", "col11", "col12", "col13", "col14", "col15", "col16", "col17", "col18", "col19"
-#     ])
+    df = pd.read_csv(file_path, header=None, names=[
+        "id", "col2", "entrada_salida", "rut", "col5", "hora", "minuto", "mes", "dia", "anio",
+        "col10", "col11", "col12", "col13", "col14", "col15", "col16", "col17", "col18"
+    ])
     
-#     # Convertir a timestamp para facilitar la comparación
-#     df["timestamp"] = df.apply(lambda row: datetime(
-#         row["anio"], row["mes"], row["dia"], row["hora"], row["minuto"]
-#     ), axis=1)
+    # Convertir a timestamp para facilitar la comparación
+    df["timestamp"] = df.apply(lambda row: datetime(
+        row["anio"], row["mes"], row["dia"], row["hora"], row["minuto"]
+    ), axis=1)
 
-#     # Ordenar por RUT y timestamp
-#     df.sort_values(by=["rut", "timestamp"], inplace=True)
-
-#     # Procesar duplicados
-#     adjusted_rows = []
-#     for i, row in df.iterrows():
-#         if i == 0:
-#             adjusted_rows.append({**row, "isDuplicate": False})
-#             continue
+    # Ordenar por RUT y timestamp
+    df.sort_values(by=["rut", "timestamp"], inplace=True)
+    df = df.reset_index(drop=True)
+    # Procesar duplicados
+    adjusted_rows = []
+    for i, row in df.iterrows():
+        if i == 0:
+            adjusted_rows.append({**row, "isDuplicate": False})
+            continue
         
-#         previous_row = adjusted_rows[-1]
+        previous_row = adjusted_rows[-1]
         
-#         # Chequear si es la misma persona y si la diferencia de tiempo es menor a 5 minutos
-#         if row["rut"] == previous_row["rut"] and row["entrada_salida"] == 1:
-#             time_difference = row["timestamp"] - previous_row["timestamp"]
+        # Chequear si es la misma persona y si la diferencia de tiempo es menor a 5 minutos
+        if row["rut"] == previous_row["rut"] and row["entrada_salida"] == 1:
+            time_difference = row["timestamp"] - previous_row["timestamp"]
             
-#             if time_difference < timedelta(minutes=5):
-#                 # Marcar como duplicado
-#                 adjusted_rows[-1]["isDuplicate"] = True
-#                 adjusted_rows.append({**row, "isDuplicate": True})
-#                 continue
+            if time_difference < timedelta(minutes=5):
+                # Marcar como duplicado
+                adjusted_rows[-1]["isDuplicate"] = True
+                adjusted_rows.append({**row, "isDuplicate": True})
+                continue
             
-#         # Si no es un duplicado, simplemente agregar la fila original
-#         adjusted_rows.append({**row, "isDuplicate": False})
+        # Si no es un duplicado, simplemente agregar la fila original
+        adjusted_rows.append({**row, "isDuplicate": False})
 
-#     marked_data = pd.DataFrame(adjusted_rows).to_dict(orient='records')
-#     duplicates_count = sum(row.get('isDuplicate', False) for row in marked_data)
+    marked_data = pd.DataFrame(adjusted_rows).to_dict(orient='records')
+    duplicates_count = sum(row.get('isDuplicate', False) for row in marked_data)
 
-#     return jsonify({'markedData': marked_data, 'duplicatesCount': duplicates_count}), 200
+    return jsonify({'markedData': marked_data, 'duplicatesCount': duplicates_count}), 200
 
 
-# @upload_bp.route('/repair/<filename>', methods=['POST'])
-# def repair_duplicates(filename):
-#     file_path = os.path.join(UPLOAD_FOLDER, filename)
-#     if not os.path.exists(file_path):
-#         return jsonify({'message': 'Archivo no encontrado'}), 404
+@upload_bp.route('/repair/<filename>', methods=['POST'])
+def repair_duplicates(filename):
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    if not os.path.exists(file_path):
+        return jsonify({'message': 'Archivo no encontrado'}), 404
 
-#     df = pd.read_csv(file_path, header=None, names=[
-#         "id", "col2", "entrada_salida", "rut", "col5", "hora", "minuto", "mes", "dia", "anio",
-#         "col10", "col11", "col12", "col13", "col14", "col15", "col16", "col17", "col18", "col19"
-#     ])
+    df = pd.read_csv(file_path, header=None, names=[
+        "id", "col2", "entrada_salida", "rut", "col5", "hora", "minuto", "mes", "dia", "anio",
+        "col10", "col11", "col12", "col13", "col14", "col15", "col16", "col17", "col18"
+    ])
     
-#     # Convertir a timestamp para facilitar la comparación
-#     df["timestamp"] = df.apply(lambda row: datetime(
-#         row["anio"], row["mes"], row["dia"], row["hora"], row["minuto"]
-#     ), axis=1)
+    # Convertir a timestamp para facilitar la comparación
+    df["timestamp"] = df.apply(lambda row: datetime(
+        row["anio"], row["mes"], row["dia"], row["hora"], row["minuto"]
+    ), axis=1)
 
-#     # Ordenar por RUT y timestamp
-#     df.sort_values(by=["rut", "timestamp"], inplace=True)
+    # Ordenar por RUT y timestamp
+    df.sort_values(by=["rut", "timestamp"], inplace=True)
+    df = df.reset_index(drop=True)
 
-#     # Procesar duplicados y crear una lista de filas ajustadas
-#     adjusted_rows = []
-#     for i, row in df.iterrows():
-#         if i == 0:
-#             adjusted_rows.append(row)
-#             continue
+    # Procesar duplicados y crear una lista de filas ajustadas
+    adjusted_rows = []
+    for i, row in df.iterrows():
+        if i == 0:
+            adjusted_rows.append(row)
+            continue
         
-#         previous_row = adjusted_rows[-1]
+        previous_row = adjusted_rows[-1]
         
-#         if row["rut"] == previous_row["rut"] and row["entrada_salida"] == 1:
-#             time_difference = row["timestamp"] - previous_row["timestamp"]
+        if row["rut"] == previous_row["rut"] and row["entrada_salida"] == 1:
+            time_difference = row["timestamp"] - previous_row["timestamp"]
             
-#             if time_difference < timedelta(minutes=5):
-#                 # Ajustar el registro: convertir segunda marca de entrada en salida y crear nuevo registro de entrada
-#                 salida_row = row.copy()
-#                 salida_row["entrada_salida"] = 3  # Convertir a salida
+            if time_difference < timedelta(minutes=5):
+                # Ajustar el registro: convertir segunda marca de entrada en salida y crear nuevo registro de entrada
+                salida_row = row.copy()
+                salida_row["entrada_salida"] = 3  # Convertir a salida
                 
-#                 entrada_row = row.copy()  # Crear un nuevo registro de entrada con el mismo horario
+                entrada_row = row.copy()  # Crear un nuevo registro de entrada con el mismo horario
                 
-#                 # Agregar los ajustes
-#                 adjusted_rows.append(salida_row)
-#                 adjusted_rows.append(entrada_row)
-#                 continue
+                # Agregar los ajustes
+                adjusted_rows.append(salida_row)
+                adjusted_rows.append(entrada_row)
+                continue
             
-#         adjusted_rows.append(row)
+        adjusted_rows.append(row)
 
-#     # Convertir de nuevo a DataFrame
-#     adjusted_df = pd.DataFrame(adjusted_rows)
+    # Convertir de nuevo a DataFrame
+    adjusted_df = pd.DataFrame(adjusted_rows)
 
-#     # Guardar los resultados en un archivo nuevo
-#     repaired_file_path = os.path.join('ruta_a_tu_carpeta_de_reparacion', f'reparado_{filename}')
-#     adjusted_df.to_csv(repaired_file_path, index=False, header=False)
+    # Guardar los resultados en un archivo nuevo
+    repaired_file_path = os.path.join(UPLOAD_FOLDER, filename)
+    adjusted_df.to_csv(repaired_file_path, index=False, header=False)
 
-#     return jsonify({'repairedData': adjusted_df.to_dict(orient='records')}), 200   
+    return jsonify({'repairedData': adjusted_df.to_dict(orient='records')}), 200   

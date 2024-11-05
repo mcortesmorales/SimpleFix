@@ -11,6 +11,53 @@ const DupRepairPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [diagnosisResults, setDiagnosisResults] = useState(null); // Para almacenar resultados del diagnóstico
+
+  // Función para diagnosticar duplicados
+  const handleDiagnose = async () => {
+    if (!selectedFile) return; // Asegúrate de que hay un archivo seleccionado
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`http://localhost:5001/diagnose/${selectedFile}`, {
+        method: 'POST',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setDiagnosisResults(data); // Almacena los resultados del diagnóstico
+        setFileData(data.markedData)
+      } else {
+        console.error("Error al diagnosticar duplicados:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error al llamar al endpoint de diagnóstico:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Función para reparar duplicados
+  const handleRepair = async () => {
+    if (!selectedFile) return; // Asegúrate de que hay un archivo seleccionado
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`http://localhost:5001/repair/${selectedFile}`, {
+        method: 'POST',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        console.log(data.message); // Mensaje de éxito
+        fetchFiles(); // Para mostrar el archivo reparado
+      } else {
+        console.error("Error al reparar duplicados:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error al llamar al endpoint de reparación:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Función para obtener la lista de archivos desde el backend
   const fetchFiles = async () => {
@@ -142,7 +189,7 @@ const DupRepairPage = () => {
                     <tbody>
                       {fileData.length > 0 ? (
                         fileData.map((row, index) => (
-                          <tr key={index}>
+                          <tr key={index} className={row.isDuplicate ? 'table-danger' : ''}>
                             <td>{row.entrada_salida}</td>
                             <td>{row.rut}</td>
                             <td>{row.hora}</td>
@@ -161,9 +208,18 @@ const DupRepairPage = () => {
 
               {/* Botones de Diagnosticar y Reparar */}
               <div className="text-center mt-3">
-                <button className="btn btn-secondary me-2">Diagnosticar</button>
-                <button className="btn btn-primary">Reparar</button>
+                <button className="btn btn-secondary me-2" onClick={handleDiagnose}>Diagnosticar</button>
+                <button className="btn btn-primary" onClick={handleRepair}>Reparar</button>
               </div>
+
+              {/* Resultados del diagnóstico */}
+              {diagnosisResults && (
+                <div className="mt-4">
+                  <h6>Resultados del Diagnóstico:</h6>
+                  <p>Número de duplicados encontrados: {diagnosisResults.duplicatesCount}</p>
+                </div>
+              )}
+
             </div>
           </div>
         </div>

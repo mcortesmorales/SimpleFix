@@ -20,3 +20,7 @@
 .download-button:hover {
   background-color: #e0e0e0; /* Cambia el color de fondo en hover */
 }
+
+.duplicate-row {
+  background-color: rgba(255, 0, 0, 0.3); /* Color de fondo rojo con opacidad */
+}
