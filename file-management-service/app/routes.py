@@ -94,7 +94,7 @@ def get_file_data(filename):
         reader = csv.reader(file)
         for row in reader:
             # Extrae las columnas relevantes
-            entrada_salida = "Entrada" if (row[2] == "01" or row[2] == 1) else "Salida"
+            entrada_salida = "Entrada" if (row[2] == "01") else "Salida"
             rut = row[3]
             hora = row[5]
             minutos = row[6]
@@ -122,13 +122,13 @@ def download_file(filename):
     # Enviar el archivo para descarga
     return send_file(file_path, as_attachment=True), 200
 
-
 @upload_bp.route('/diagnose/<filename>', methods=['POST'])
 def diagnose_duplicates(filename):
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     if not os.path.exists(file_path):
         return jsonify({'message': 'Archivo no encontrado'}), 404
 
+    # Leer el archivo y asignar nombres a las columnas
     df = pd.read_csv(file_path, header=None, names=[
         "id", "col2", "entrada_salida", "rut", "col5", "hora", "minuto", "mes", "dia", "anio",
         "col10", "col11", "col12", "col13", "col14", "col15", "col16", "col17", "col18"
@@ -142,6 +142,7 @@ def diagnose_duplicates(filename):
     # Ordenar por RUT y timestamp
     df.sort_values(by=["rut", "timestamp"], inplace=True)
     df = df.reset_index(drop=True)
+    
     # Procesar duplicados
     adjusted_rows = []
     for i, row in df.iterrows():
@@ -155,35 +156,60 @@ def diagnose_duplicates(filename):
         if row["rut"] == previous_row["rut"] and row["entrada_salida"] == 1:
             time_difference = row["timestamp"] - previous_row["timestamp"]
             
-            if time_difference < timedelta(minutes=5):
-                # Marcar como duplicado
-                adjusted_rows[-1]["isDuplicate"] = True
+            # Buscar una salida entre las dos entradas
+            salida_found = any(
+                df.iloc[j]["entrada_salida"] == 3 and df.iloc[j]["rut"] == row["rut"]
+                for j in range(i - 1, i)  # Chequear solo entre la fila anterior y la actual
+            )
+            
+            if time_difference < timedelta(minutes=5) and not salida_found:
+                # Marcar como duplicado si no se encontró una salida
                 adjusted_rows.append({**row, "isDuplicate": True})
                 continue
             
         # Si no es un duplicado, simplemente agregar la fila original
         adjusted_rows.append({**row, "isDuplicate": False})
 
-    marked_data = pd.DataFrame(adjusted_rows).to_dict(orient='records')
-    duplicates_count = sum(row.get('isDuplicate', False) for row in marked_data)
+    # Convertir a formato solicitado por el frontend
+    marcajes = []
+    for row in adjusted_rows:
+        entrada_salida = "Entrada" if row["entrada_salida"] == 1 else "Salida"
+        rut = row["rut"]
+        hora = f"{int(row['hora']):02}:{int(row['minuto']):02}"
+        fecha = f"{int(row['dia']):02}/{int(row['mes']):02}/{row['anio']}"
+        is_duplicate = row["isDuplicate"]
 
-    return jsonify({'markedData': marked_data, 'duplicatesCount': duplicates_count}), 200
+        marcajes.append({
+            'entrada_salida': entrada_salida,
+            'rut': rut,
+            'hora': hora,
+            'fecha': fecha,
+            'isDuplicate': is_duplicate
+        })
+
+    # Contar duplicados
+    duplicates_count = sum(1 for row in marcajes if row['isDuplicate'])
+
+    return jsonify({'markedData': marcajes, 'duplicatesCount': duplicates_count}), 200
 
 
+
+#aca puede que si la persona trate de reparar un archivo ya reparado agregue cosas demas porque no ordena como ordena en el diagnose
 @upload_bp.route('/repair/<filename>', methods=['POST'])
 def repair_duplicates(filename):
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     if not os.path.exists(file_path):
         return jsonify({'message': 'Archivo no encontrado'}), 404
 
+    # Leer el archivo con formato original
     df = pd.read_csv(file_path, header=None, names=[
         "id", "col2", "entrada_salida", "rut", "col5", "hora", "minuto", "mes", "dia", "anio",
         "col10", "col11", "col12", "col13", "col14", "col15", "col16", "col17", "col18"
-    ])
-    
+    ], dtype=str)  # Leer todo como string para preservar el formato
+
     # Convertir a timestamp para facilitar la comparación
     df["timestamp"] = df.apply(lambda row: datetime(
-        row["anio"], row["mes"], row["dia"], row["hora"], row["minuto"]
+        int(row["anio"]), int(row["mes"]), int(row["dia"]), int(row["hora"]), int(row["minuto"])
     ), axis=1)
 
     # Ordenar por RUT y timestamp
@@ -196,31 +222,50 @@ def repair_duplicates(filename):
         if i == 0:
             adjusted_rows.append(row)
             continue
-        
+
         previous_row = adjusted_rows[-1]
-        
-        if row["rut"] == previous_row["rut"] and row["entrada_salida"] == 1:
+
+        if row["rut"] == previous_row["rut"] and row["entrada_salida"] == '01':
             time_difference = row["timestamp"] - previous_row["timestamp"]
             
-            if time_difference < timedelta(minutes=5):
-                # Ajustar el registro: convertir segunda marca de entrada en salida y crear nuevo registro de entrada
+            # Buscar una salida intermedia entre las dos entradas
+            salida_found = any(
+                df.iloc[j]["entrada_salida"] == '03' and df.iloc[j]["rut"] == row["rut"]
+                for j in range(i - 1, i)
+            )
+
+            # Solo si no hay salida intermedia y la diferencia de tiempo es menor a 5 minutos
+            if time_difference < timedelta(minutes=5) and not salida_found:
+                # Ajustar el registro: convertir la segunda marca de entrada en salida y crear un nuevo registro de entrada
                 salida_row = row.copy()
-                salida_row["entrada_salida"] = 3  # Convertir a salida
-                
+                salida_row["entrada_salida"] = "3"  # Convertir a salida
+
                 entrada_row = row.copy()  # Crear un nuevo registro de entrada con el mismo horario
-                
+
                 # Agregar los ajustes
                 adjusted_rows.append(salida_row)
                 adjusted_rows.append(entrada_row)
                 continue
-            
+
         adjusted_rows.append(row)
 
-    # Convertir de nuevo a DataFrame
+    # Convertir de nuevo a DataFrame y ordenar por timestamp
     adjusted_df = pd.DataFrame(adjusted_rows)
+    adjusted_df.sort_values(by=["timestamp", "entrada_salida"], ascending=[True, False], inplace=True)
 
-    # Guardar los resultados en un archivo nuevo
+    # Eliminar la columna de timestamp
+    adjusted_df.drop(columns=["timestamp"], inplace=True)
+
+    # Convertir las columnas numéricas a su formato original
+    adjusted_df["id"] = adjusted_df["id"].apply(lambda x: x.zfill(3))
+    adjusted_df["hora"] = adjusted_df["hora"].apply(lambda x: x.zfill(2))
+    adjusted_df["minuto"] = adjusted_df["minuto"].apply(lambda x: x.zfill(2))
+    adjusted_df["mes"] = adjusted_df["mes"].apply(lambda x: x.zfill(2))
+    adjusted_df["dia"] = adjusted_df["dia"].apply(lambda x: x.zfill(2))
+    adjusted_df["anio"] = adjusted_df["anio"].apply(lambda x: x.zfill(2))
+
+    # Guardar los resultados en un archivo nuevo con formato original
     repaired_file_path = os.path.join(UPLOAD_FOLDER, filename)
-    adjusted_df.to_csv(repaired_file_path, index=False, header=False)
+    adjusted_df.to_csv(repaired_file_path, index=False, header=False, float_format="%.2f")
 
-    return jsonify({'repairedData': adjusted_df.to_dict(orient='records')}), 200   
+    return jsonify({'repairedData': adjusted_df.to_dict(orient='records')}), 200
