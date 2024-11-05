@@ -11,6 +11,7 @@ import SettingsPage from './pages/SettingsPage';
 import DropPage from './pages/dropPage';
 import RepairPage from './pages/RepairPage';
 import DupRepairPage from './pages/DupRepairPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
           <Route path="/file-drop" element={<PrivateRoute><DropPage /></PrivateRoute>} />
           <Route path="/repair" element={<PrivateRoute><RepairPage /></PrivateRoute>} />
           <Route path="/dup-repair" element={<PrivateRoute><DupRepairPage /></PrivateRoute>} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
     </Router>

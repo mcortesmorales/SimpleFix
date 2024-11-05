@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import FileDrop from '../components/FileDrop';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useNavigate } from 'react-router-dom'; // Importa useNavigate
 
 const DropPage = () => {
   const [fileList, setFileList] = useState([]);
   const [error, setError] = useState('');
+  const navigate = useNavigate(); // Crea la instancia de navigate
 
   const fetchFileList = async () => {
     try {
@@ -42,11 +44,16 @@ const DropPage = () => {
     }
   };
 
+  // Nueva función para manejar la navegación a la página de reparación
+  const handleRepairFile = (fileName) => {
+    navigate(`/dup-repair?file=${encodeURIComponent(fileName)}`); // Cambia la ruta según sea necesario
+  };
+
   return (
     <div className="container my-5 pt-5">
       <h2 className="text-center mb-4">Subir Archivo</h2>
       <div className="card p-4 mb-4 shadow-sm">
-        <FileDrop fetchFileList={fetchFileList} /> {/* Cambiado aquí */}
+        <FileDrop fetchFileList={fetchFileList} />
       </div>
 
       <div className="card p-4 shadow-sm">
@@ -70,7 +77,7 @@ const DropPage = () => {
                   <td>{new Date(file.date).toLocaleString()}</td>
                   <td className="text-end">
                     <button className="btn btn-info btn-sm me-2" onClick={() => handleViewFile(file.name)}>Ver</button>
-                    <button className="btn btn-warning btn-sm me-2" onClick={() => handleEditFile(file.name)}>Ir a reparar</button>
+                    <button className="btn btn-warning btn-sm me-2" onClick={() => handleRepairFile(file.name)}>Ir a reparar</button>
                     <button className="btn btn-danger btn-sm" onClick={() => handleDeleteFile(file.name)}>Eliminar</button>
                   </td>
                 </tr>

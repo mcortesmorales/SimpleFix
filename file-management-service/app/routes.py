@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from models import allowed_file, save_file
 from config import Config
 import csv
+from flask import send_file
 #import pandas as pd
 from datetime import datetime, timedelta
 
@@ -109,6 +110,17 @@ def get_file_data(filename):
             })
     
     return jsonify(marcajes), 200
+
+
+@upload_bp.route('/files/<filename>/download', methods=['GET'])
+def download_file(filename):
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+    if not os.path.exists(file_path):
+        return jsonify({'message': 'Archivo no encontrado'}), 404
+
+    # Enviar el archivo para descarga
+    return send_file(file_path, as_attachment=True), 200
 
 
 # @upload_bp.route('/diagnose/<filename>', methods=['POST'])

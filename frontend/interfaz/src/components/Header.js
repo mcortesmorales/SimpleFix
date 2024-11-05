@@ -21,17 +21,45 @@ const Header = () => {
   return (
     <AppBar position="fixed">
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        {/* Título SimpleFix con estilo y funcionalidad de enlace */}
+        <Typography
+          variant="h6"
+          component={Link} // Cambiado a Link para redirigir
+          to="/" // Ruta a la que redirige
+          sx={{
+            flexGrow: 1,
+            textDecoration: 'none', // Eliminar subrayado
+            color: 'white', // Color del texto
+            '&:hover': {
+              color: 'lightblue', // Color al pasar el ratón
+              transition: 'color 0.3s ease' // Transición suave
+            }
+          }}
+        >
           SimpleFix
         </Typography>
+        
         <div>
-          <Link to="/" style={{ color: 'white', marginRight: 16 }}>Inicio</Link>
-          <Link to="/file-drop" style={{ color: 'white', marginRight: 16 }}>Subir Archivos</Link>
-          <Link to="/visualizacion" style={{ color: 'white', marginRight: 16 }}>Visualización</Link>
-          {user?.role === 'Administrador' && (
-            <Link to="/admin" style={{ color: 'white', marginRight: 16 }}>Panel de Administración</Link>
-          )}
+          {/* Estilo para los enlaces */}
+          {['/', '/file-drop', '/visualizacion', '/repair', '/admin'].map((path, index) => (
+            <Link
+              key={index}
+              to={path}
+              style={{
+                color: 'white',
+                marginRight: 16,
+                textDecoration: 'none', // Eliminar subrayado
+                '&:hover': {
+                  color: 'lightblue', // Color al pasar el ratón
+                  transition: 'color 0.3s ease' // Transición suave
+                }
+              }}
+            >
+              {path === '/' ? 'Inicio' : path === '/file-drop' ? 'Subir Archivos' : path === '/visualizacion' ? 'Visualización' : path === '/repair' ? 'Reparar' : 'Panel de Administración'}
+            </Link>
+          ))}
         </div>
+        
         {/* Contenedor del nombre de usuario e icono con estilo distintivo */}
         <Box
           sx={{

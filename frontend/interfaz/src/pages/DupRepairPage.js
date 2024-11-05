@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { FaDownload } from 'react-icons/fa'; // Asegúrate de instalar react-icons
+import './DupRepairPage.css'; // Asegúrate de tener un archivo CSS separado
 
 const DupRepairPage = () => {
   const [files, setFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileData, setFileData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Función para obtener la lista de archivos desde el backend
   const fetchFiles = async () => {
@@ -25,48 +30,90 @@ const DupRepairPage = () => {
   // Llama a `fetchFiles` una vez cuando el componente se monta
   useEffect(() => {
     fetchFiles();
+
+    // Verifica si hay un archivo en los parámetros de búsqueda y lo selecciona
+    const fileName = searchParams.get('file');
+    if (fileName) {
+      setSelectedFile(fileName);
+      fetchFileData(fileName);
+    }
   }, []);
 
-  // Maneja la selección de un archivo y obtiene sus datos
-  const handleFileClick = async (file) => {
-    setSelectedFile(file.name);
-    setIsLoading(true);  // Activa el estado de carga
-    setFileData([]);  // Limpia los datos previos mientras carga el nuevo archivo
+  // Función para obtener los datos del archivo seleccionado
+  const fetchFileData = async (fileName) => {
+    setIsLoading(true);
+    setFileData([]);
 
     try {
-      const response = await fetch(`http://localhost:5001/files/${file.name}`);
+      const response = await fetch(`http://localhost:5001/files/${fileName}`);
       if (response.ok) {
         const data = await response.json();
-        setFileData(data); // Carga los datos específicos del archivo
+        setFileData(data);
       } else {
         console.error("Error al obtener el contenido del archivo:", response.statusText);
       }
     } catch (error) {
       console.error("Error al obtener datos del archivo:", error);
     } finally {
-      setIsLoading(false);  // Desactiva el estado de carga una vez que termina
+      setIsLoading(false);
     }
+  };
+
+  // Maneja la selección de un archivo y actualiza la URL con el nombre del archivo
+  const handleFileClick = (file) => {
+    setSelectedFile(file.name);
+    setSearchParams({ file: file.name });  // Actualiza los parámetros de búsqueda en la URL
+    fetchFileData(file.name);
+  };
+
+  // Función para descargar el archivo
+  const handleDownload = (fileName, event) => {
+    event.stopPropagation(); // Evita que el clic en el botón de descarga active la selección
+    window.location.href = `http://localhost:5001/files/${fileName}/download`;
   };
 
   return (
     <div className="container-fluid p-4 pt-5 my-5">
       <h2 className="text-center mb-4">Herramienta de Reparación de Duplicados</h2>
       <div className="row">
-        {/* Lista de archivos a la izquierda */}
+        {/* Lista de archivos en una tarjeta */}
         <div className="col-md-3">
-          <div className="list-group">
-            {files.map((file, index) => (
-              <button 
-                key={index} 
-                className={`list-group-item list-group-item-action ${file.name === selectedFile ? 'active' : ''}`}
-                onClick={() => handleFileClick(file)}
-              >
-                {file.name}
-              </button>
-            ))}
+          <div className="card shadow-sm">
+            <div className="card-header text-center">
+              <h5>Lista de Archivos</h5>
+            </div>
+            <div className="card-body">
+              <div className="list-group">
+                {files.length > 0 ? (
+                  files.map((file, index) => (
+                    <div 
+                      key={index} 
+                      className={`list-group-item d-flex justify-content-between align-items-center ${file.name === selectedFile ? 'active' : ''} file-item`}
+                      onClick={() => handleFileClick(file)}
+                      style={{ cursor: 'pointer' }} // Cambia el cursor para indicar que es clickeable
+                    >
+                      <span>{file.name}</span>
+                      <button 
+                        className="btn btn-outline-secondary btn-sm download-button"
+                        onClick={(event) => handleDownload(file.name, event)} // Pasa el evento al manejador
+                      >
+                        <FaDownload />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center mt-3">
+                    <p>Aún no se ha subido ningún archivo.</p>
+                    <button className="btn btn-primary" onClick={() => navigate('/file-drop')}>
+                      Subir archivo
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-        
+
         {/* Contenedor para la tabla de datos y los botones */}
         <div className="col-md-9">
           <div className="card shadow-sm">

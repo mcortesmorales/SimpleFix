@@ -1,0 +1,22 @@
+.file-item {
+  transition: background-color 0.2s ease;
+}
+
+.file-item:hover {
+  background-color: #f8f9fa; /* Cambia el color del fondo en hover */
+}
+
+/* Solo aplica el efecto hover si no está seleccionado */
+.file-item.active:hover {
+  background-color:#0d6efd; /* Sin efecto de hover si está activo */
+}
+
+.download-button {
+  background-color: white; /* Fondo blanco para el botón de descarga */
+  border: 1px solid #ccc; /* Añade un borde ligero */
+  transition: background-color 0.2s ease; /* Efecto de transición */
+}
+
+.download-button:hover {
+  background-color: #e0e0e0; /* Cambia el color de fondo en hover */
+}

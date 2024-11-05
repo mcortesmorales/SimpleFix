@@ -4,6 +4,9 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
+# Crear la carpeta de uploads en el contenedor
+RUN mkdir /uploads && chmod 777 /uploads
+
 # Copiar el archivo de dependencias
 COPY requirements.txt requirements.txt
 
