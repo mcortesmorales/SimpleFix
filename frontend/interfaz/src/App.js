@@ -13,6 +13,7 @@ import RepairPage from './pages/RepairPage';
 import DupRepairPage from './pages/DupRepairPage';
 import FileUploadPage from './components/FileUploadPage';
 import Trabajadores from './pages/Trabajadores';
+import NotFoundPage from './pages/NotFoundPage';
 
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
           <Route path="/dup-repair" element={<PrivateRoute><DupRepairPage /></PrivateRoute>} />
           <Route path="/trabajadores" element={<Trabajadores/>} />
           <Route path="/subir-horario" element={<FileUploadPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
     </Router>
