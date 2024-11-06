@@ -11,7 +11,7 @@ const Trabajadores = () => {
     const [totalTrabajadores, setTotalTrabajadores] = useState(0);
     const [trabajadorSeleccionado, setTrabajadorSeleccionado] = useState(null);
     const [showModal, setShowModal] = useState(false);
-    const [mensajeError, setMensajeError] = useState(''); // Nuevo estado para mensajes de error
+    const [mensajeError, setMensajeError] = useState('');
     const trabajadoresPorPagina = 10;
 
     useEffect(() => {
@@ -25,17 +25,17 @@ const Trabajadores = () => {
 
     const buscarTrabajador = async (e) => {
         e.preventDefault();
-        setMensajeError(''); // Limpiar mensaje anterior
+        setMensajeError('');
         try {
             const response = await axios.get(`http://localhost:5003/trabajadores/${rut}`);
             setTrabajadores(response.data ? [response.data] : []);
             setTotalTrabajadores(response.data ? 1 : 0);
-            setPagina(1); // Reinicia la paginación al buscar
+            setPagina(1);
         } catch (error) {
             console.error("Error al buscar trabajador:", error);
             setTrabajadores([]);
             setTotalTrabajadores(0);
-            setMensajeError('Trabajador no encontrado'); // Mostrar mensaje de error
+            setMensajeError('Trabajador no encontrado');
         }
     };
 
@@ -43,8 +43,8 @@ const Trabajadores = () => {
         setPagina(numeroPagina);
     };
 
-    const mostrarDetallesTrabajador = async (trabajador) => {
-        setTrabajadorSeleccionado(trabajador); // Guardar el trabajador directamente
+    const mostrarDetallesTrabajador = (trabajador) => {
+        setTrabajadorSeleccionado(trabajador);
         setShowModal(true);
     };
 
@@ -52,7 +52,7 @@ const Trabajadores = () => {
 
     return (
         <div className="container mt-5">
-            <h1 className="mb-4">Lista de Trabajadores</h1>
+            <h1 className="mb-4 mt-5 pt-5 text-center">Lista de Trabajadores</h1>
             <form onSubmit={buscarTrabajador} className="mb-4">
                 <div className="input-group">
                     <input
@@ -66,7 +66,7 @@ const Trabajadores = () => {
                 </div>
             </form>
 
-            {mensajeError && <div className="alert alert-danger">{mensajeError}</div>} {/* Mensaje de error */}
+            {mensajeError && <div className="alert alert-danger text-center">{mensajeError}</div>}
 
             <ul className="list-group">
                 {trabajadores.map((trabajador) => (
@@ -82,8 +82,9 @@ const Trabajadores = () => {
                 ))}
             </ul>
 
-            <div className="mt-4">
+            <div className="mt-4 d-flex justify-content-center align-items-center">
                 <Button
+                    className="pagination-button"
                     onClick={() => manejarCambioPagina(pagina - 1)}
                     disabled={pagina === 1}
                 >
@@ -91,6 +92,7 @@ const Trabajadores = () => {
                 </Button>
                 <span className="mx-3">Página {pagina} de {totalPaginas}</span>
                 <Button
+                    className="pagination-button"
                     onClick={() => manejarCambioPagina(pagina + 1)}
                     disabled={pagina === totalPaginas}
                 >
@@ -98,8 +100,7 @@ const Trabajadores = () => {
                 </Button>
             </div>
 
-            {/* Modal para mostrar detalles del trabajador */}
-            <Modal show={showModal} onHide={() => setShowModal(false)}>
+            <Modal show={showModal} onHide={() => setShowModal(false)} centered>
                 <Modal.Header closeButton>
                     <Modal.Title>Detalles del Trabajador</Modal.Title>
                 </Modal.Header>

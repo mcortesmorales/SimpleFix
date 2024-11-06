@@ -43,8 +43,8 @@ const HomePage = () => {
   }
 
   return (
-    <div className="d-flex flex-column align-items-center justify-content-center vh-100 p-5">
-      <h2 className="text-center mb-5">Bienvenido a la Página de Inicio</h2>
+    <div className="d-flex flex-column align-items-center justify-content-center vh-100 p-5 mt-5">
+      <h2 className="text-center mb-5 mt-4">Bienvenido a la Página de Inicio</h2>
       <div className="row justify-content-center">
         {cards.map((card, index) => (
           <div key={index} className="col-md-4 col-sm-12 mb-5">

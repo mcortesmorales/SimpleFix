@@ -19,3 +19,19 @@
 .rut-link:hover {
     color: darkblue; /* Cambia el color al pasar el mouse */
 }
+
+
+/* Listado de trabajadores */
+.list-group-item {
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.list-group-item:hover {
+  background-color: #e9ecef;
+}
+
+/* Botones de paginación */
+.pagination-button {
+  margin: 0 5px;
+}

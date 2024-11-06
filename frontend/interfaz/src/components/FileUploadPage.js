@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const FileUploadPage = () => {
     const [selectedFiles, setSelectedFiles] = useState({ horariosAsignados: null, horariosCreados: null });
@@ -29,52 +30,49 @@ const FileUploadPage = () => {
         formData.append('horarios_asignados', selectedFiles.horariosAsignados);
         formData.append('horarios_creados', selectedFiles.horariosCreados);
 
-        // Verifica el contenido de FormData
-        for (let pair of formData.entries()) {
-            console.log(pair[0], pair[1]);
-        }
-
         try {
             const response = await axios.post('http://localhost:5003/upload', formData);
-
             setMessage(response.data.message || 'Archivos subidos exitosamente.');
         } catch (error) {
             setMessage('Error al subir los archivos. Intenta nuevamente.');
-            console.error(error); // Muestra el error completo en la consola
+            console.error(error);
         }
 
         setLoading(false);
     };
 
-
     return (
-        <div className="container mt-4">
-            <h2>Subir Archivos de Horarios</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                    <label htmlFor="horariosAsignados" className="form-label">Archivo Horarios Asignados</label>
-                    <input
-                        type="file"
-                        name="horariosAsignados"
-                        id="horariosAsignados"
-                        className="form-control"
-                        onChange={handleFileChange}
-                    />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="horariosCreados" className="form-label">Archivo Horarios Creados</label>
-                    <input
-                        type="file"
-                        name="horariosCreados"
-                        id="horariosCreados"
-                        className="form-control"
-                        onChange={handleFileChange}
-                    />
-                </div>
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                    {loading ? 'Subiendo...' : 'Subir Archivos'}
-                </button>
-            </form>
+        <div className="container my-5 pt-5">
+            <h2 className="text-center mb-4">Subir Archivos de Horarios</h2>
+            <div className="card p-4 mb-4 shadow-sm">
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-3">
+                        <label htmlFor="horariosAsignados" className="form-label">Archivo Horarios Asignados</label>
+                        <input
+                            type="file"
+                            name="horariosAsignados"
+                            id="horariosAsignados"
+                            className="form-control"
+                            onChange={handleFileChange}
+                        />
+                    </div>
+                    <div className="mb-3">
+                        <label htmlFor="horariosCreados" className="form-label">Archivo Horarios Creados</label>
+                        <input
+                            type="file"
+                            name="horariosCreados"
+                            id="horariosCreados"
+                            className="form-control"
+                            onChange={handleFileChange}
+                        />
+                    </div>
+                    <div className="d-flex justify-content-center">
+                        <button type="submit" className="btn btn-primary" disabled={loading}>
+                            {loading ? 'Subiendo...' : 'Subir Archivos'}
+                        </button>
+                    </div>
+                </form>
+            </div>
             {message && (
                 <div className={`alert mt-4 ${message.includes('exitosamente') ? 'alert-success' : 'alert-danger'}`}>
                     {message}

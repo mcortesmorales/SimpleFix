@@ -40,16 +40,8 @@ const Header = () => {
         </Typography>
         
         <div>
-          <Link to="/" style={{ color: 'white', marginRight: 16 }}>Inicio</Link>
-          <Link to="/file-drop" style={{ color: 'white', marginRight: 16 }}>Subir Archivos</Link>
-          <Link to="/subir-horario" style={{ color: 'white', marginRight: 16 }}>Subir Horarios</Link>
-          <Link to="/visualizacion" style={{ color: 'white', marginRight: 16 }}>Visualización</Link>
-          <Link to="/trabajadores" style={{ color: 'white', marginRight: 16 }}>Ver Trabajadores</Link>
-          {user?.role === 'Administrador' && (
-            <Link to="/admin" style={{ color: 'white', marginRight: 16 }}>Panel de Administración</Link>
-          )}
           {/* Estilo para los enlaces */}
-          {['/', '/file-drop', '/visualizacion', '/repair', '/admin'].map((path, index) => (
+          {['/', '/file-drop', '/visualizacion', '/repair', '/admin','/trabajadores','/subir-horario'].map((path, index) => (
             <Link
               key={index}
               to={path}
@@ -63,7 +55,7 @@ const Header = () => {
                 }
               }}
             >
-              {path === '/' ? 'Inicio' : path === '/file-drop' ? 'Subir Archivos' : path === '/visualizacion' ? 'Visualización' : path === '/repair' ? 'Reparar' : 'Panel de Administración'}
+              {path === '/' ? 'Inicio' : path === '/file-drop' ? 'Subir Archivos' : path === '/visualizacion' ? 'Visualización' : path === '/repair' ? 'Reparar' : path === '/admin' ? 'Panel de administración': path === '/trabajadores' ? 'Ver Trabajadores' : 'Subir Horarios'}
             </Link>
           ))}
         </div>
