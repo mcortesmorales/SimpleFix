@@ -21,14 +21,11 @@ services:
     ports:
       - "5001:5000"
     environment:
-      - MONGO_URI=mongodb://file-db:27017/filedb  # Agregar MongoDB específico para gestión de archivos
       - PYTHONUNBUFFERED=1
       - FLASK_ENV=development  # Modo desarrollo
       - FLASK_DEBUG=1  # Habilitar debug
     volumes:
       - ./file-management-service:/app
-    depends_on:
-      - file-db  # Dependencia para que el servicio espere a que MongoDB esté listo
 
     # Microservicio de Gestión de Horario (Flask + Pandas + MongoDB)
   file-schedule-service:
@@ -84,12 +81,6 @@ services:
     image: mongo:5.0
     volumes:
       - audit-db-data:/data/db
-
-  # Base de datos para el microservicio de gestión de archivos
-  file-db:
-    image: mongo:5.0
-    volumes:
-      - file-db-data:/data/db
   
   # Base de datos para el microservicio de gestión de horarios
   fileschedule-db:
@@ -100,5 +91,4 @@ services:
 volumes:
   auth-db-data:
   audit-db-data:
-  file-db-data:
   fileschedule-db-data:
