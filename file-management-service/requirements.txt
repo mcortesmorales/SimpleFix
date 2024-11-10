@@ -1,4 +1,11 @@
-Flask==2.3.2
+Flask
 pandas==1.5.3
 numpy==1.23.0
 Flask-CORS==3.0.10
+pytest
+flask-testing
+pytest-flask 
+flask-bcrypt 
+flask-pymongo 
+flask-jwt-extended
+werkzeug

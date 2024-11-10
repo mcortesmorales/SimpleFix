@@ -17,6 +17,7 @@ COPY . .
 ENV FLASK_APP=app/app.py
 ENV FLASK_ENV=development
 ENV FLASK_DEBUG=1
+ENV PYTHONPATH=/app
 
 # Ejecutar Flask
 CMD ["flask", "run", "--host=0.0.0.0"]
