@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, Modal } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../App.css';
 
@@ -10,7 +9,6 @@ const Trabajadores = () => {
     const [pagina, setPagina] = useState(1);
     const [totalTrabajadores, setTotalTrabajadores] = useState(0);
     const [trabajadorSeleccionado, setTrabajadorSeleccionado] = useState(null);
-    const [showModal, setShowModal] = useState(false);
     const [mensajeError, setMensajeError] = useState('');
     const trabajadoresPorPagina = 10;
 
@@ -45,7 +43,8 @@ const Trabajadores = () => {
 
     const mostrarDetallesTrabajador = (trabajador) => {
         setTrabajadorSeleccionado(trabajador);
-        setShowModal(true);
+        const modal = new window.bootstrap.Modal(document.getElementById('trabajadorModal'));
+        modal.show();
     };
 
     const totalPaginas = Math.ceil(totalTrabajadores / trabajadoresPorPagina);
@@ -83,53 +82,57 @@ const Trabajadores = () => {
             </ul>
 
             <div className="mt-4 d-flex justify-content-center align-items-center">
-                <Button
-                    className="pagination-button"
+                <button
+                    className="btn btn-secondary me-2"
                     onClick={() => manejarCambioPagina(pagina - 1)}
                     disabled={pagina === 1}
                 >
                     Anterior
-                </Button>
+                </button>
                 <span className="mx-3">Página {pagina} de {totalPaginas}</span>
-                <Button
-                    className="pagination-button"
+                <button
+                    className="btn btn-secondary"
                     onClick={() => manejarCambioPagina(pagina + 1)}
                     disabled={pagina === totalPaginas}
                 >
                     Siguiente
-                </Button>
+                </button>
             </div>
 
-            <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Detalles del Trabajador</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    {trabajadorSeleccionado && (
-                        <div>
-                            <p><strong>RUT:</strong> {trabajadorSeleccionado.RUT}</p>
-                            <p><strong>DV:</strong> {trabajadorSeleccionado.DV}</p>
-                            <h5>Turnos:</h5>
-                            <ul>
-                                {trabajadorSeleccionado.turnos && trabajadorSeleccionado.turnos.length > 0 ? (
-                                    trabajadorSeleccionado.turnos.map((turno, index) => (
-                                        <li key={index}>
-                                            {turno.dia} - Entrada: {turno.hora_entrada}, Salida: {turno.hora_salida}
-                                        </li>
-                                    ))
-                                ) : (
-                                    <li>No se encontraron turnos.</li>
-                                )}
-                            </ul>
+            {/* Modal */}
+            <div className="modal fade" id="trabajadorModal" tabIndex="-1" aria-labelledby="trabajadorModalLabel" aria-hidden="true">
+                <div className="modal-dialog">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h5 className="modal-title" id="trabajadorModalLabel">Detalles del Trabajador</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                    )}
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowModal(false)}>
-                        Cerrar
-                    </Button>
-                </Modal.Footer>
-            </Modal>
+                        <div className="modal-body">
+                            {trabajadorSeleccionado && (
+                                <div>
+                                    <p><strong>RUT:</strong> {trabajadorSeleccionado.RUT}</p>
+                                    <p><strong>DV:</strong> {trabajadorSeleccionado.DV}</p>
+                                    <h5>Turnos:</h5>
+                                    <ul>
+                                        {trabajadorSeleccionado.turnos && trabajadorSeleccionado.turnos.length > 0 ? (
+                                            trabajadorSeleccionado.turnos.map((turno, index) => (
+                                                <li key={index}>
+                                                    {turno.dia} - Entrada: {turno.hora_entrada}, Salida: {turno.hora_salida}
+                                                </li>
+                                            ))
+                                        ) : (
+                                            <li>No se encontraron turnos.</li>
+                                        )}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

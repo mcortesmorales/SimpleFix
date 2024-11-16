@@ -24,3 +24,13 @@
 .duplicate-row {
   background-color: rgba(255, 0, 0, 0.3); /* Color de fondo rojo con opacidad */
 }
+
+.table th {
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+.table th:hover {
+  color: #007bff; /* Cambia el color del texto */
+  background-color: #f8f9fa; /* Cambia ligeramente el fondo */
+  cursor: pointer; /* Añade el cursor tipo "mano" */
+}

@@ -12,20 +12,18 @@ const DupRepairPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [diagnosisResults, setDiagnosisResults] = useState(null); // Para almacenar resultados del diagnóstico
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
-  // Función para diagnosticar duplicados
   const handleDiagnose = async () => {
-    if (!selectedFile) return; // Asegúrate de que hay un archivo seleccionado
-
+    if (!selectedFile) return;
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:5001/diagnose/${selectedFile}`, {
-        method: 'POST',
-      });
+      const response = await fetch(`http://localhost:5001/diagnose/${selectedFile}`, { method: 'POST' });
       if (response.ok) {
         const data = await response.json();
-        setDiagnosisResults(data); // Almacena los resultados del diagnóstico
-        setFileData(data.markedData)
+        setDiagnosisResults(data);
+        setFileData(data.markedData);
+        console.log(diagnosisResults.duplicatesCount);
       } else {
         console.error("Error al diagnosticar duplicados:", response.statusText);
       }
@@ -36,19 +34,15 @@ const DupRepairPage = () => {
     }
   };
 
-  // Función para reparar duplicados
   const handleRepair = async () => {
-    if (!selectedFile) return; // Asegúrate de que hay un archivo seleccionado
-
+    if (!selectedFile) return;
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:5001/repair/${selectedFile}`, {
-        method: 'POST',
-      });
+      const response = await fetch(`http://localhost:5001/repair/${selectedFile}`, { method: 'POST' });
       if (response.ok) {
         const data = await response.json();
-        console.log(data.message); // Mensaje de éxito
-        fetchFiles(); // Para mostrar el archivo reparado
+        console.log(data.message);
+        fetchFiles();
       } else {
         console.error("Error al reparar duplicados:", response.statusText);
       }
@@ -59,7 +53,6 @@ const DupRepairPage = () => {
     }
   };
 
-  // Función para obtener la lista de archivos desde el backend
   const fetchFiles = async () => {
     try {
       const response = await fetch('http://localhost:5001/files');
@@ -74,11 +67,8 @@ const DupRepairPage = () => {
     }
   };
 
-  // Llama a `fetchFiles` una vez cuando el componente se monta
   useEffect(() => {
     fetchFiles();
-
-    // Verifica si hay un archivo en los parámetros de búsqueda y lo selecciona
     const fileName = searchParams.get('file');
     if (fileName) {
       setSelectedFile(fileName);
@@ -86,11 +76,9 @@ const DupRepairPage = () => {
     }
   }, []);
 
-  // Función para obtener los datos del archivo seleccionado
   const fetchFileData = async (fileName) => {
     setIsLoading(true);
     setFileData([]);
-
     try {
       const response = await fetch(`http://localhost:5001/files/${fileName}`);
       if (response.ok) {
@@ -106,24 +94,37 @@ const DupRepairPage = () => {
     }
   };
 
-  // Maneja la selección de un archivo y actualiza la URL con el nombre del archivo
   const handleFileClick = (file) => {
     setSelectedFile(file.name);
-    setSearchParams({ file: file.name });  // Actualiza los parámetros de búsqueda en la URL
+    setSearchParams({ file: file.name });
     fetchFileData(file.name);
   };
 
-  // Función para descargar el archivo
   const handleDownload = (fileName, event) => {
-    event.stopPropagation(); // Evita que el clic en el botón de descarga active la selección
+    event.stopPropagation();
     window.location.href = `http://localhost:5001/files/${fileName}/download`;
+  };
+
+  // Función para ordenar las filas de la tabla
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+
+    const sortedData = [...fileData].sort((a, b) => {
+      if (a[key] < b[key]) return direction === 'asc' ? -1 : 1;
+      if (a[key] > b[key]) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+    setFileData(sortedData);
   };
 
   return (
     <div className="container-fluid p-4 pt-5 my-5">
       <h2 className="text-center mb-4">Herramienta de Reparación de Duplicados</h2>
       <div className="row">
-        {/* Lista de archivos en una tarjeta */}
         <div className="col-md-3">
           <div className="card shadow-sm">
             <div className="card-header text-center">
@@ -137,12 +138,12 @@ const DupRepairPage = () => {
                       key={index} 
                       className={`list-group-item d-flex justify-content-between align-items-center ${file.name === selectedFile ? 'active' : ''} file-item`}
                       onClick={() => handleFileClick(file)}
-                      style={{ cursor: 'pointer' }} // Cambia el cursor para indicar que es clickeable
+                      style={{ cursor: 'pointer' }}
                     >
                       <span>{file.name}</span>
                       <button 
                         className="btn btn-outline-secondary btn-sm download-button"
-                        onClick={(event) => handleDownload(file.name, event)} // Pasa el evento al manejador
+                        onClick={(event) => handleDownload(file.name, event)}
                       >
                         <FaDownload />
                       </button>
@@ -161,13 +162,11 @@ const DupRepairPage = () => {
           </div>
         </div>
 
-        {/* Contenedor para la tabla de datos y los botones */}
         <div className="col-md-9">
           <div className="card shadow-sm">
             <div className="card-body">
               <h5 className="text-center">Datos de: {selectedFile || "Selecciona un archivo"}</h5>
               
-              {/* Indicador de carga o tabla de datos */}
               {isLoading ? (
                 <div className="text-center my-4">
                   <div className="spinner-border" role="status">
@@ -180,10 +179,21 @@ const DupRepairPage = () => {
                   <table className="table table-striped mt-3">
                     <thead>
                       <tr>
-                        <th>Entrada/Salida</th>
-                        <th>RUT</th>
-                        <th>Hora</th>
-                        <th>Fecha</th>
+                        <th onClick={() => handleSort('entrada_salida')} style={{ cursor: 'pointer' }}>
+                          Entrada/Salida {sortConfig.key === 'entrada_salida' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                        </th>
+                        <th onClick={() => handleSort('rut')} style={{ cursor: 'pointer' }}>
+                          RUT {sortConfig.key === 'rut' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                        </th>
+                        <th onClick={() => handleSort('hora')} style={{ cursor: 'pointer' }}>
+                          Hora {sortConfig.key === 'hora' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                        </th>
+                        <th onClick={() => handleSort('fecha')} style={{ cursor: 'pointer' }}>
+                          Fecha {sortConfig.key === 'fecha' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                        </th>
+                        <th onClick={() => handleSort('isDuplicate')} style={{ cursor: 'pointer' }}>
+                          ¿Duplicado? {sortConfig.key === 'isDuplicate' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -194,11 +204,12 @@ const DupRepairPage = () => {
                             <td>{row.rut}</td>
                             <td>{row.hora}</td>
                             <td>{row.fecha}</td>
+                            <td>{row.isDuplicate ? 'Sí' : 'No'}</td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="4" className="text-center">Selecciona un archivo para ver sus datos.</td>
+                          <td colSpan="5" className="text-center">Selecciona un archivo para ver sus datos.</td>
                         </tr>
                       )}
                     </tbody>
@@ -206,20 +217,15 @@ const DupRepairPage = () => {
                 </div>
               )}
 
-              {/* Botones de Diagnosticar y Reparar */}
               <div className="text-center mt-3">
                 <button className="btn btn-secondary me-2" onClick={handleDiagnose}>Diagnosticar</button>
                 <button className="btn btn-primary" onClick={handleRepair}>Reparar</button>
               </div>
-
-              {/* Resultados del diagnóstico */}
               {diagnosisResults && (
-                <div className="mt-4">
-                  <h6>Resultados del Diagnóstico:</h6>
-                  <p>Número de duplicados encontrados: {diagnosisResults.duplicatesCount}</p>
+                <div className="mt-3 alert alert-info text-center">
+                  Se encontraron {diagnosisResults.duplicatesCount} duplicados.
                 </div>
               )}
-
             </div>
           </div>
         </div>
