@@ -147,12 +147,18 @@ def obtener_trabajadores():
         return jsonify({"error": str(e)}), 500
 
 @file_bp.route('/trabajadores/<string:rut>', methods=['GET'])
-def obtener_trabajador_por_rut(rut):
-    trabajador = current_app.mongo_db.trabajadores.find_one({'RUT': rut})
+def obtener_trabajadores_por_rut(rut):
+    # Busca todos los registros que coincidan con el RUT
+    trabajadores = current_app.mongo_db.trabajadores.find({'RUT': rut})
     
-    if trabajador:
-        # Convierte el campo '_id' a cadena para que sea JSON serializable
-        trabajador['_id'] = str(trabajador['_id'])  
-        return jsonify(trabajador), 200
+    # Convierte el cursor en una lista de documentos y transforma '_id' para cada uno
+    trabajadores_list = []
+    for trabajador in trabajadores:
+        trabajador['_id'] = str(trabajador['_id'])  # Convierte '_id' a cadena
+        trabajadores_list.append(trabajador)
+    
+    if trabajadores_list:
+        return jsonify(trabajadores_list), 200
     else:
         return jsonify({'mensaje': 'Trabajador no encontrado'}), 404
+
