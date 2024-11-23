@@ -66,7 +66,7 @@ const DropPage = () => {
             <thead>
               <tr>
                 <th>Nombre</th>
-                <th>Fecha</th>
+                <th>Fecha de ultima modificación</th>
                 <th className="text-end">Acciones</th>
               </tr>
             </thead>
@@ -74,7 +74,7 @@ const DropPage = () => {
               {fileList.map((file, index) => (
                 <tr key={index}>
                   <td>{file.name}</td>
-                  <td>{new Date(file.date).toLocaleString()}</td>
+                  <td>{new Date(file.date * 1000).toLocaleString()}</td>
                   <td className="text-end">
                     <button className="btn btn-info btn-sm me-2" onClick={() => handleViewFile(file.name)}>Ver</button>
                     <button className="btn btn-warning btn-sm me-2" onClick={() => handleRepairFile(file.name)}>Ir a reparar</button>

@@ -162,7 +162,7 @@ def diagnose_duplicates(filename):
                 for j in range(i - 1, i)  # Chequear solo entre la fila anterior y la actual
             )
             
-            if time_difference < timedelta(minutes=5) and not salida_found:
+            if time_difference < timedelta(minutes=3) and not salida_found:
                 # Marcar como duplicado si no se encontró una salida
                 adjusted_rows.append({**row, "isDuplicate": True})
                 continue
@@ -235,7 +235,7 @@ def repair_duplicates(filename):
             )
 
             # Solo si no hay salida intermedia y la diferencia de tiempo es menor a 5 minutos
-            if time_difference < timedelta(minutes=5) and not salida_found:
+            if time_difference < timedelta(minutes=3) and not salida_found:
                 # Ajustar el registro: convertir la segunda marca de entrada en salida y crear un nuevo registro de entrada
                 salida_row = row.copy()
                 salida_row["entrada_salida"] = "3"  # Convertir a salida
@@ -248,6 +248,8 @@ def repair_duplicates(filename):
                 continue
 
         adjusted_rows.append(row)
+
+
 
     # Convertir de nuevo a DataFrame y ordenar por timestamp
     adjusted_df = pd.DataFrame(adjusted_rows)

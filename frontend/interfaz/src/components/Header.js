@@ -41,7 +41,7 @@ const Header = () => {
         
         <div>
           {/* Estilo para los enlaces */}
-          {['/', '/file-drop', '/visualizacion', '/repair', '/admin','/trabajadores','/subir-horario'].map((path, index) => (
+          {['/', '/visualizacion', '/repair', '/admin','/trabajadores','/upload-menu'].map((path, index) => (
             <Link
               key={index}
               to={path}
@@ -55,7 +55,7 @@ const Header = () => {
                 }
               }}
             >
-              {path === '/' ? 'Inicio' : path === '/file-drop' ? 'Subir Archivos' : path === '/visualizacion' ? 'Visualización' : path === '/repair' ? 'Reparar' : path === '/admin' ? 'Panel de administración': path === '/trabajadores' ? 'Ver Trabajadores' : 'Subir Horarios'}
+              {path === '/' ? 'Inicio' : path === '/upload-menu' ? 'Subir Archivos' : path === '/visualizacion' ? 'Visualización' : path === '/repair' ? 'Reparar' : path === '/admin' ? 'Panel de administración': path === '/trabajadores' ? 'Ver Trabajadores' : null}
             </Link>
           ))}
         </div>

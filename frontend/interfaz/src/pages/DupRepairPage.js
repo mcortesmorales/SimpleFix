@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FaDownload } from 'react-icons/fa'; // Asegúrate de instalar react-icons
-import './DupRepairPage.css'; // Asegúrate de tener un archivo CSS separado
+import { FaDownload } from 'react-icons/fa';
+import './DupRepairPage.css';
 
 const DupRepairPage = () => {
   const [files, setFiles] = useState([]);
@@ -23,7 +23,6 @@ const DupRepairPage = () => {
         const data = await response.json();
         setDiagnosisResults(data);
         setFileData(data.markedData);
-        console.log(diagnosisResults.duplicatesCount);
       } else {
         console.error("Error al diagnosticar duplicados:", response.statusText);
       }
@@ -41,8 +40,9 @@ const DupRepairPage = () => {
       const response = await fetch(`http://localhost:5001/repair/${selectedFile}`, { method: 'POST' });
       if (response.ok) {
         const data = await response.json();
-        console.log(data.message);
         fetchFiles();
+        fetchFileData(selectedFile);
+        setDiagnosisResults(null);
       } else {
         console.error("Error al reparar duplicados:", response.statusText);
       }
@@ -98,6 +98,7 @@ const DupRepairPage = () => {
     setSelectedFile(file.name);
     setSearchParams({ file: file.name });
     fetchFileData(file.name);
+    setDiagnosisResults(null); // Oculta el mensaje al cambiar de archivo
   };
 
   const handleDownload = (fileName, event) => {
@@ -121,11 +122,15 @@ const DupRepairPage = () => {
     setFileData(sortedData);
   };
 
+  // Comprueba si la columna "isDuplicate" debe mostrarse
+  const showDuplicateColumn = fileData.length > 0 && 'isDuplicate' in fileData[0];
+
   return (
     <div className="container-fluid p-4 pt-5 my-5">
       <h2 className="text-center mb-4">Herramienta de Reparación de Duplicados</h2>
       <div className="row">
         <div className="col-md-3">
+          {/* Lista de archivos */}
           <div className="card shadow-sm">
             <div className="card-header text-center">
               <h5>Lista de Archivos</h5>
@@ -152,7 +157,7 @@ const DupRepairPage = () => {
                 ) : (
                   <div className="text-center mt-3">
                     <p>Aún no se ha subido ningún archivo.</p>
-                    <button className="btn btn-primary" onClick={() => navigate('/file-drop')}>
+                    <button className="btn btn-primary" onClick={() => navigate('/upload-reloj')}>
                       Subir archivo
                     </button>
                   </div>
@@ -191,9 +196,11 @@ const DupRepairPage = () => {
                         <th onClick={() => handleSort('fecha')} style={{ cursor: 'pointer' }}>
                           Fecha {sortConfig.key === 'fecha' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
                         </th>
-                        <th onClick={() => handleSort('isDuplicate')} style={{ cursor: 'pointer' }}>
-                          ¿Duplicado? {sortConfig.key === 'isDuplicate' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
-                        </th>
+                        {showDuplicateColumn && (
+                          <th onClick={() => handleSort('isDuplicate')} style={{ cursor: 'pointer' }}>
+                            ¿Duplicado? {sortConfig.key === 'isDuplicate' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : ''}
+                          </th>
+                        )}
                       </tr>
                     </thead>
                     <tbody>
@@ -204,12 +211,14 @@ const DupRepairPage = () => {
                             <td>{row.rut}</td>
                             <td>{row.hora}</td>
                             <td>{row.fecha}</td>
-                            <td>{row.isDuplicate ? 'Sí' : 'No'}</td>
+                            {showDuplicateColumn && <td>{row.isDuplicate ? "Sí" : "No"}</td>}
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="5" className="text-center">Selecciona un archivo para ver sus datos.</td>
+                          <td colSpan={showDuplicateColumn ? 5 : 4} className="text-center">
+                            No hay datos disponibles para mostrar.
+                          </td>
                         </tr>
                       )}
                     </tbody>
@@ -217,13 +226,28 @@ const DupRepairPage = () => {
                 </div>
               )}
 
-              <div className="text-center mt-3">
-                <button className="btn btn-secondary me-2" onClick={handleDiagnose}>Diagnosticar</button>
-                <button className="btn btn-primary" onClick={handleRepair}>Reparar</button>
+              <div className="mt-3 text-center">
+                <button 
+                  className="btn btn-warning me-2"
+                  onClick={handleDiagnose}
+                  disabled={!selectedFile || isLoading}
+                >
+                  Diagnosticar
+                </button>
+                <button 
+                  className="btn btn-success"
+                  onClick={handleRepair}
+                  disabled={!selectedFile || isLoading}
+                >
+                  Reparar
+                </button>
               </div>
+
               {diagnosisResults && (
-                <div className="mt-3 alert alert-info text-center">
-                  Se encontraron {diagnosisResults.duplicatesCount} duplicados.
+                <div className="alert alert-info mt-4">
+                  {diagnosisResults.duplicatesCount > 0 
+                    ? `Se encontraron ${diagnosisResults.duplicatesCount} duplicados en el archivo.`
+                    : "No se encontraron duplicados en el archivo."}
                 </div>
               )}
             </div>

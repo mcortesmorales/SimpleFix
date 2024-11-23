@@ -14,7 +14,7 @@ import DupRepairPage from './pages/DupRepairPage';
 import FileUploadPage from './components/FileUploadPage';
 import Trabajadores from './pages/Trabajadores';
 import NotFoundPage from './pages/NotFoundPage';
-
+import UploadMenuPage from './pages/UploadMenuPage';
 
 function App() {
   return (
@@ -39,12 +39,13 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route path="/upload-menu" element={<PrivateRoute><UploadMenuPage /></PrivateRoute>} />
           <Route path="/configuracion" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
-          <Route path="/file-drop" element={<PrivateRoute><DropPage /></PrivateRoute>} />
+          <Route path="/upload-reloj" element={<PrivateRoute><DropPage /></PrivateRoute>} />
           <Route path="/repair" element={<PrivateRoute><RepairPage /></PrivateRoute>} />
           <Route path="/dup-repair" element={<PrivateRoute><DupRepairPage /></PrivateRoute>} />
           <Route path="/trabajadores" element={<Trabajadores/>} />
-          <Route path="/subir-horario" element={<FileUploadPage />} />
+          <Route path="/upload-horario" element={<FileUploadPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>

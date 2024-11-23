@@ -16,11 +16,11 @@ const HomePage = () => {
       buttonText: "Ver" 
     },
     { 
-      title: "Subir Archivos de Marcaje", 
-      text: "Carga los archivos que contienen los datos de marcaje para su corrección y análisis.", 
+      title: "Subir Archivos", 
+      text: "Cargar los archivos para su corrección y análisis.", 
       icon: <FaUpload size={35} />, 
       buttonText: "Subir Archivos", 
-      onClick: () => navigate('/file-drop') // Navega a la ruta /file-drop
+      onClick: () => navigate('/upload-menu') // Navega a la ruta /file-drop
     },
     { 
       title: "Corregir Errores", 
