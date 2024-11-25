@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FaDownload } from 'react-icons/fa';
 import './DupRepairPage.css';
+import axios from 'axios';
 
 const DupRepairPage = () => {
   const [files, setFiles] = useState([]);
@@ -43,6 +44,7 @@ const DupRepairPage = () => {
         fetchFiles();
         fetchFileData(selectedFile);
         setDiagnosisResults(null);
+        setInfoInLogs(selectedFile);
       } else {
         console.error("Error al reparar duplicados:", response.statusText);
       }
@@ -52,6 +54,42 @@ const DupRepairPage = () => {
       setIsLoading(false);
     }
   };
+
+  const setInfoInLogs = async (fileName) => {
+      try {
+          // Obtener información del usuario
+          const response = await fetch('http://localhost:5000/auth/user-info', {
+              headers: {
+                  'Authorization': `Bearer ${localStorage.getItem('token')}` // Asegúrate de almacenar el token JWT en localStorage
+              }
+          });
+
+          if (response.status === 200) {
+              const userInfo = response.data;
+
+              // Datos adicionales que quieras incluir en el log
+              const logData = {
+                  fileName: fileName,
+                  userId: userInfo.username,
+                  userRole: userInfo.role,
+                  timestamp: new Date().toISOString()
+              };
+
+              // Guardar los datos del log en la base de datos de logs
+              const saveResponse = await axios.post('http://localhost:5000/api/insert/logs', logData);
+              if (saveResponse.status === 200) {
+                  console.log('Log saved successfully:', saveResponse.data);
+              } else {
+                  console.error('Failed to save log:', saveResponse.statusText);
+              }
+          } else {
+              console.error('Failed to get user info:', response.statusText);
+          }
+      } catch (error) {
+          console.error('Error in setInfoInLogs:', error);
+      }
+  };
+
 
   const fetchFiles = async () => {
     try {
