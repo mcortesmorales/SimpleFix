@@ -10,10 +10,11 @@ const HomePage = () => {
 
   const cards = [
     { 
-      title: "Visualizar Marcajes", 
-      text: "Accede a un resumen detallado de los marcajes y posibles errores.", 
+      title: "Visualizar", 
+      text: "Accede a un resumen detallado de la informacion subida.", 
       icon: <FaEye size={35} />, 
-      buttonText: "Ver" 
+      buttonText: "Ver",
+      onClick: () => navigate('/visualize-page') // Navega a la ruta /file-drop
     },
     { 
       title: "Subir Archivos", 

@@ -116,36 +116,47 @@ const Trabajadores = () => {
             </div>
 
             <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Detalles del Trabajador</Modal.Title>
+                <Modal.Header closeButton style={{ backgroundColor: '#007bff', color: 'white' }}>
+                    <Modal.Title className="w-100 text-center">Detalles del Trabajador</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    {trabajadorSeleccionado && (
+                    {trabajadorSeleccionado ? (
                         <div>
-                            <p><strong>RUT:</strong> {trabajadorSeleccionado.RUT}</p>
-                            <p><strong>DV:</strong> {trabajadorSeleccionado.DV}</p>
-                            <p><strong>Horario Asignado:</strong> {trabajadorSeleccionado.horario_asignado}</p>
-                            <h5>Turnos:</h5>
-                            <ul>
+                            <div className="mb-3">
+                                <h5 className="text-primary">Información General</h5>
+                                <p><strong>RUT:</strong> {trabajadorSeleccionado.RUT}</p>
+                                <p><strong>DV:</strong> {trabajadorSeleccionado.DV}</p>
+                                <p><strong>Horario Asignado:</strong> {trabajadorSeleccionado.horario_asignado}</p>
+                            </div>
+                            <div>
+                                <h5 className="text-primary">Turnos</h5>
                                 {trabajadorSeleccionado.turnos && trabajadorSeleccionado.turnos.length > 0 ? (
-                                    trabajadorSeleccionado.turnos.map((turno, index) => (
-                                        <li key={index}>
-                                            {turno.dia} - Entrada: {turno.hora_entrada}, Salida: {turno.hora_salida}
-                                        </li>
-                                    ))
+                                    <ul className="list-group">
+                                        {trabajadorSeleccionado.turnos.map((turno, index) => (
+                                            <li key={index} className="list-group-item">
+                                                <strong>{turno.dia}:</strong> Entrada: {turno.hora_entrada}, Salida: {turno.hora_salida}
+                                            </li>
+                                        ))}
+                                    </ul>
                                 ) : (
-                                    <li>No se encontraron turnos.</li>
+                                    <p className="text-muted">No se encontraron turnos asignados.</p>
                                 )}
-                            </ul>
+                            </div>
                         </div>
+                    ) : (
+                        <p className="text-center text-muted">No se encontró información del trabajador seleccionado.</p>
                     )}
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowModal(false)}>
+                    <Button
+                        variant="outline-secondary"
+                        onClick={() => setShowModal(false)}
+                        className="w-100">
                         Cerrar
                     </Button>
                 </Modal.Footer>
             </Modal>
+
 
         </div>
     );

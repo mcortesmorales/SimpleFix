@@ -15,6 +15,7 @@ import FileUploadPage from './components/FileUploadPage';
 import Trabajadores from './pages/Trabajadores';
 import NotFoundPage from './pages/NotFoundPage';
 import UploadMenuPage from './pages/UploadMenuPage';
+import VisualizePage from './pages/VisualizePage';
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
           <Route path="/upload-reloj" element={<PrivateRoute><DropPage /></PrivateRoute>} />
           <Route path="/repair" element={<PrivateRoute><RepairPage /></PrivateRoute>} />
           <Route path="/dup-repair" element={<PrivateRoute><DupRepairPage /></PrivateRoute>} />
+          <Route path="/visualize-page" element={<VisualizePage/>} />
           <Route path="/trabajadores" element={<Trabajadores/>} />
           <Route path="/upload-horario" element={<FileUploadPage />} />
           <Route path="*" element={<NotFoundPage />} />
