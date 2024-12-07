@@ -53,6 +53,8 @@ const AdminPanel = () => {
     }
   };
 
+  const countAdmins = users.filter(user => user.role === 'Administrador').length;
+
   return (
     <div className="container my-5 pt-5">
       <h2 className="text-center mb-4">Panel de Administración</h2>
@@ -85,7 +87,6 @@ const AdminPanel = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              {/* Checkbox justo debajo del campo de la contraseña */}
               <div className="mb-3 form-check">
                 <input
                   type="checkbox"
@@ -143,6 +144,7 @@ const AdminPanel = () => {
                     <button
                       className="btn btn-danger btn-sm"
                       onClick={() => handleDeleteUser(user.username)}
+                      disabled={user.role === 'Administrador' && countAdmins === 1} // Deshabilitar si es el único administrador
                     >
                       Eliminar
                     </button>

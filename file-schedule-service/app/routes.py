@@ -13,36 +13,46 @@ def extraer_turnos(file):
 
     for row in file.read().decode('utf-8').splitlines():
         row = row.strip()
-        
+
+        # Asegurarse de que solo procesamos líneas con información relevante de turnos
         if row.startswith("Codigo horario  :"):
             if turno_actual:
                 turnos.append(turno_actual)
                 turno_actual = {}
-            
+
             parts = row.split(';')
-            turno_actual['codigo_horario'] = parts[1].strip()
-            turno_actual['nombre_horario'] = parts[3].strip()
-            turno_actual['días'] = []
-            en_turnos = True
-        
-        elif en_turnos and len(row) > 0:
+            if len(parts) > 3:
+                turno_actual['codigo_horario'] = parts[1].strip()
+                turno_actual['nombre_horario'] = parts[3].strip()
+                turno_actual['días'] = []
+                en_turnos = True
+
+        # Solo procesamos las líneas que corresponden a los días y horarios
+        elif en_turnos and len(row) > 0 and row.count(';') >= 5:  # Aseguramos que tenga suficientes delimitadores
             partes_dia = row.split(';')
-            if len(partes_dia) >= 6:
+            if len(partes_dia) >= 6:  # Verifica que haya suficientes columnas
                 dia_info = {
-                    'dia': partes_dia[19].strip(),
-                    'hora_entrada': partes_dia[20].strip(),
-                    'hora_salida': partes_dia[21].strip(),
+                    'dia': partes_dia[1].strip(),  # Día (Lunes, Martes, etc.)
+                    'hora_entrada': partes_dia[5].strip(),  # Hora de entrada
+                    'hora_salida': partes_dia[6].strip(),  # Hora de salida
                 }
                 if dia_info['dia'] and dia_info['hora_entrada'] and dia_info['hora_salida']:
                     turno_actual['días'].append(dia_info)
-        
-        elif en_turnos and row.startswith("MINISTERIO DE SALUD;"):
+
+        # Si se encuentra una línea con 'MINISTERIO DE SALUD', es un metadato, ignorarlo
+        elif "MINISTERIO DE SALUD" in row:
+            continue
+
+        # Si encontramos la fila final con ';;;;;;', termina la extracción
+        elif row.startswith("MINISTERIO DE SALUD;"):
             en_turnos = False
 
+    # Asegura agregar el último turno
     if turno_actual:
         turnos.append(turno_actual)
 
     return pd.DataFrame(turnos)
+
 
 # Cargar y procesar el archivo "HORARIOS_ASIGNADOS_MODIFICADO.csv"
 def cargar_horarios_asignados(file):
@@ -162,3 +172,34 @@ def obtener_trabajadores_por_rut(rut):
     else:
         return jsonify({'mensaje': 'Trabajador no encontrado'}), 404
 
+@file_bp.route('/trabajadores/horario', methods=['GET'])
+def obtener_trabajadores_por_horario():
+    try:
+        # Obtener el parámetro del horario asignado desde los argumentos de la solicitud
+        horario_asignado = request.args.get('horario_asignado', None)
+        
+        if not horario_asignado:
+            return jsonify({"error": "El parámetro 'horario_asignado' es obligatorio"}), 400
+
+        # Buscar trabajadores que tengan el horario asignado especificado
+        trabajadores = list(current_app.mongo_db.trabajadores.find({'horario_asignado': horario_asignado}, {"_id": 0}))
+        
+        if trabajadores:
+            return jsonify(trabajadores), 200
+        else:
+            return jsonify({'mensaje': 'No se encontraron trabajadores con el horario asignado especificado'}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@file_bp.route('/horarios_asignados', methods=['GET'])
+def obtener_horarios_asignados():
+    try:
+        # Obtener una lista única de horarios asignados desde MongoDB
+        horarios_asignados = current_app.mongo_db.trabajadores.distinct('horario_asignado')
+        
+        if horarios_asignados:
+            return jsonify({"horarios_asignados": horarios_asignados}), 200
+        else:
+            return jsonify({"mensaje": "No se encontraron horarios asignados"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

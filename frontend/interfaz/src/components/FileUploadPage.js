@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 const FileUploadPage = () => {
     const [selectedFiles, setSelectedFiles] = useState({ horariosAsignados: null, horariosCreados: null });
     const [message, setMessage] = useState('');
+    const [isSuccess, setIsSuccess] = useState(false); // Nuevo estado para éxito o error
     const [loading, setLoading] = useState(false);
 
     const handleFileChange = (e) => {
@@ -19,9 +20,11 @@ const FileUploadPage = () => {
         e.preventDefault();
         setLoading(true);
         setMessage('');
+        setIsSuccess(false);
 
         if (!selectedFiles.horariosAsignados || !selectedFiles.horariosCreados) {
             setMessage('Por favor, sube ambos archivos.');
+            setIsSuccess(false);
             setLoading(false);
             return;
         }
@@ -33,8 +36,10 @@ const FileUploadPage = () => {
         try {
             const response = await axios.post('http://localhost:5003/upload', formData);
             setMessage(response.data.message || 'Archivos subidos exitosamente.');
+            setIsSuccess(true); // Marcar como éxito
         } catch (error) {
             setMessage('Error al subir los archivos. Intenta nuevamente.');
+            setIsSuccess(false); // Marcar como error
             console.error(error);
         }
 
@@ -74,7 +79,7 @@ const FileUploadPage = () => {
                 </form>
             </div>
             {message && (
-                <div className={`alert mt-4 ${message.includes('exitosamente') ? 'alert-success' : 'alert-danger'}`}>
+                <div className={`alert mt-4 ${isSuccess ? 'alert-success' : 'alert-danger'}`}>
                     {message}
                 </div>
             )}
