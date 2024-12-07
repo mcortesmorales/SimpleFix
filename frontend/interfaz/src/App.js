@@ -16,6 +16,7 @@ import Trabajadores from './pages/Trabajadores';
 import NotFoundPage from './pages/NotFoundPage';
 import UploadMenuPage from './pages/UploadMenuPage';
 import VisualizePage from './pages/VisualizePage';
+import AuditPage from './pages/AuditPage';
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
           <Route path="/trabajadores" element={<Trabajadores/>} />
           <Route path="/upload-horario" element={<FileUploadPage />} />
           <Route path="*" element={<NotFoundPage />} />
+          <Route path="/api/logs" element={<AuditPage />} />
         </Routes>
       </AuthProvider>
     </Router>
