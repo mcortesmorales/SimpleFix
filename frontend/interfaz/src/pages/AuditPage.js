@@ -9,7 +9,7 @@ const AuditPage = () => {
 
     useEffect(() => {
         setIsLoading(true);
-        fetch('/api/logs')
+        fetch('/api/get_logs')
             .then(response => response.json())
             .then(data => setData(data))
             .catch(error => console.error('Error fetching data:', error))
@@ -31,23 +31,29 @@ const AuditPage = () => {
                     <table className="table table-striped mt-3">
                         <thead>
                             <tr>
-                                <th>ID Usuario</th>
-                                <th>Fecha y Hora</th>
-                                <th>Cambios</th>
+                                <th>Fecha/Hora</th>
+                                <th>Usuario</th>
+                                <th>Evento</th>
+                                <th>Detalles</th>
+                                <th>Estado</th>
+                                <th>Modulo</th>
                             </tr>
                         </thead>
                         <tbody>
                             {data.length > 0 ? (
                                 data.map((item, index) => (
                                     <tr key={index}>
-                                        <td>{item._id.$oid}</td>
-                                        <td>{item.date}</td>
-                                        <td>{item.changes}</td>
+                                        <td>{item.timestamp}</td>
+                                        <td>{item.username}</td>
+                                        <td>{item.event}</td>
+                                        <td>{item.details}</td>
+                                        <td>{item.state}</td>
+                                        <td>{item.module}</td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="3" className="text-center">No hay datos disponibles para mostrar.</td>
+                                    <td colSpan="6" className="text-center">No hay datos disponibles para mostrar.</td>
                                 </tr>
                             )}
                         </tbody>
