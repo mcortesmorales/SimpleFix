@@ -50,7 +50,7 @@ function App() {
           <Route path="/trabajadores" element={<Trabajadores/>} />
           <Route path="/upload-horario" element={<FileUploadPage />} />
           <Route path="*" element={<NotFoundPage />} />
-          <Route path="/api/logs" element={<AuditPage />} />
+          <Route path="/get_logs" element={<AuditPage />} />
         </Routes>
       </AuthProvider>
     </Router>

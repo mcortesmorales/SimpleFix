@@ -1,67 +1,67 @@
-// src/pages/AuditPage.js
-import React, { useEffect, useState } from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './AuditPage.css';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-const AuditPage = () => {
-    const [data, setData] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
+const LogsPage = () => {
+  const [logs, setLogs] = useState([]);
+  const [error, setError] = useState('');
 
-    useEffect(() => {
-        setIsLoading(true);
-        fetch('/get_logs')
-            .then(response => response.json())
-            .then(data => setData(data))
-            .catch(error => console.error('Error fetching data:', error))
-            .finally(() => setIsLoading(false));
-    }, []);
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const response = await axios.get(
+            'http://localhost:5002/insert_logs',
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          ); // Ajusta la URL según tu endpoint
+        setLogs(response.data.logs); // Asegúrate de que 'logs' sea el formato esperado desde el backend
+      } catch (error) {
+        setError('Error al obtener los logs.');
+        console.error('Error al obtener los logs', error);
+      }
+    };
 
-    return (
-        <div className="container-fluid p-4 pt-5 my-5">
-            <h2 className="text-center mb-4">Registro de cambios</h2>
-            {isLoading ? (
-                <div className="text-center my-4">
-                    <div className="spinner-border" role="status">
-                        <span className="visually-hidden">Cargando...</span>
-                    </div>
-                    <p className="mt-2">Cargando datos...</p>
-                </div>
-            ) : (
-                <div className="table-responsive" style={{ maxHeight: '60vh', overflowY: 'scroll' }}>
-                    <table className="table table-striped mt-3">
-                        <thead>
-                            <tr>
-                                <th>Fecha/Hora</th>
-                                <th>Usuario</th>
-                                <th>Evento</th>
-                                <th>Detalles</th>
-                                <th>Estado</th>
-                                <th>Modulo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.length > 0 ? (
-                                data.map((item, index) => (
-                                    <tr key={index}>
-                                        <td>{item.timestamp}</td>
-                                        <td>{item.username}</td>
-                                        <td>{item.event}</td>
-                                        <td>{item.details}</td>
-                                        <td>{item.state}</td>
-                                        <td>{item.module}</td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="6" className="text-center">No hay datos disponibles para mostrar.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+    fetchLogs();
+  }, []);
+
+  return (
+    <div className="container my-5 pt-5">
+      <h2 className="text-center mb-4">Registro de Logs</h2>
+      {error && <p className="text-danger text-center">{error}</p>}
+      {logs.length === 0 ? (
+        <p className="text-center">No hay logs disponibles.</p>
+      ) : (
+        <div className="card p-4 shadow-sm">
+          <table className="table table-striped">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Nombre de Usuario</th>
+                <th>Evento</th>
+                <th>Detalles</th>
+                <th>Estado</th>
+                <th>Módulo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((log, index) => (
+                <tr key={index}>
+                  <td>{new Date(log.timestamp).toLocaleString()}</td>
+                  <td>{log.userName}</td>
+                  <td>{log.event}</td>
+                  <td>{log.details}</td>
+                  <td>{log.state}</td>
+                  <td>{log.module}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-    );
+      )}
+    </div>
+  );
 };
 
-export default AuditPage;
+export default LogsPage;

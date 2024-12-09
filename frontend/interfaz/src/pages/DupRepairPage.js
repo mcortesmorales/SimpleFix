@@ -92,7 +92,7 @@ const DupRepairPage = () => {
       timestamp: new Date().toISOString(),
       userName: userInfo.username,
       event: "Reparacion Duplicados",
-      details: "Se eliminaron duplicados de " + fileName + ".",
+      details: "El usuario"+ userInfo.username +" ah eliminado duplicados de " + fileName + ".",
       state: "Exitoso",
       module: "Reparacion"
     };

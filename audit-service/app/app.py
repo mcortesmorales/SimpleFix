@@ -3,6 +3,7 @@ from flask_cors import CORS
 from flask_pymongo import PyMongo
 from datetime import datetime
 from config import Config
+from models import get_all_logs
 
 mongo = PyMongo()
 
@@ -13,14 +14,6 @@ CORS(app)
 
 mongo.init_app(app)
 
-#middleware antes de las rutas
-"""@app.after_request 
-def after_request(response): 
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000') 
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization') 
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS') 
-    return response"""
-
 @app.route("/insert_logs", methods=['POST'])
 def insert_logs():
     try:
@@ -28,7 +21,7 @@ def insert_logs():
         if not data or not isinstance(data, dict): 
             return jsonify({"error": "Datos inválidos"}), 400
         
-        required_fields = ["hola"]#["timestamp", "userName", "event", "details", "state", "module"]
+        required_fields = ["timestamp", "userName", "event", "details", "state", "module"]
         missing_fields = [field for field in required_fields if field not in data]
 
         if missing_fields:
@@ -42,27 +35,13 @@ def insert_logs():
 @app.route("/get_logs", methods=['GET'])
 def get_logs():
     try:
-        documents = mongo.db.logs.find()
-        return jsonify(documents), 200
+        documents = get_all_logs()
+        return jsonify({'logs': documents}), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        app.logger.error(f"Error al obtener los logs: {str(e)}")
+        return jsonify({"error": "Error interno del servidor"}), 500
 
-def init():
-    if mongo.db.logs.count_documents({"details": "log inicial"}) == 0:
-        log = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "userName": "admin",
-            "event": "Reparacion Duplicados",
-            "details": "log inicial",
-            "state": "Exitoso",
-            "module": "none"
-        }
-        mongo.db.logs.insert_one(log)
-        print("Log inicial creado exitosamente.")
-    else:
-        print("Log inicial ya existe.")
 
 if __name__ == '__main__':
-    init()
     app.run(debug=True, host='0.0.0.0', port=5002)
 

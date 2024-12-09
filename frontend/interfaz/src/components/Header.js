@@ -41,7 +41,7 @@ const Header = () => {
         
         <div>
           {/* Estilo para los enlaces */}
-          {['/', '/visualize-page', '/repair', '/admin','/upload-menu','/api/logs'].map((path, index) => (
+          {['/', '/visualize-page', '/repair', '/admin','/upload-menu','/get_logs'].map((path, index) => (
             <Link
               key={index}
               to={path}
@@ -55,7 +55,7 @@ const Header = () => {
                 }
               }}
             >
-              {path === '/' ? 'Inicio' : path === '/upload-menu' ? 'Subir Archivos' : path === '/visualize-page' ? 'Visualización' : path === '/repair' ? 'Reparar' : path === '/admin' ? 'Panel de administración': path === '/api/logs' ? 'Registro de Logs' : null}
+              {path === '/' ? 'Inicio' : path === '/upload-menu' ? 'Subir Archivos' : path === '/visualize-page' ? 'Visualización' : path === '/repair' ? 'Reparar' : path === '/admin' ? 'Panel de administración': path === '/get_logs' ? 'Registro de Logs' : null}
             </Link>
           ))}
         </div>
