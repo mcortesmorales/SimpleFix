@@ -9,7 +9,7 @@ const AuditPage = () => {
 
     useEffect(() => {
         setIsLoading(true);
-        fetch('/api/get_logs')
+        fetch('/get_logs')
             .then(response => response.json())
             .then(data => setData(data))
             .catch(error => console.error('Error fetching data:', error))

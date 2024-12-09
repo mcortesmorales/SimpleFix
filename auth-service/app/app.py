@@ -18,7 +18,7 @@ jwt = JWTManager(app)
 
 def create_initial_user():
     # Datos del usuario inicial
-    print("niggers")
+    #print("niggers")
     initial_user = {
         "username": "admin",
         "password": bcrypt.generate_password_hash("123").decode("utf-8"),

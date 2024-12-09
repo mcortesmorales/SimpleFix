@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify, render_template
 from flask import current_app
 
-audit_bp = Blueprint('audit', __name__)
+audit_bp = Blueprint('audit', __name__, url_prefix='/api')
 
-@audit_bp.route("/insert_logs", methods=['POST'])
+@audit_bp.route("/insert_logs", methods=['POST','GET'])
 def insert_logs():
     try:
         data = request.json
