@@ -98,7 +98,15 @@ const DupRepairPage = () => {
     };
 
     // Enviar el log al backend
-    const saveResponse = await axios.post('http://localhost:5002/insert_logs', log);
+    const saveResponse = await axios.post(
+      'http://localhost:5002/insert_logs', 
+      log,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
     if (saveResponse.status === 201) {
       console.log('Log guardado exitosamente:', saveResponse.data);
     } else {
