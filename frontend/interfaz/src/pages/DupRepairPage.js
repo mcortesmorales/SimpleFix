@@ -88,13 +88,15 @@ const DupRepairPage = () => {
     }
 
     // Construir datos para el log
+    const now = new Date();
     const log = {
-      timestamp: new Date().toISOString(),
-      userName: userInfo.username,
-      event: "Reparacion Duplicados",
-      details: "El usuario"+ userInfo.username +" ah eliminado duplicados de " + fileName + ".",
-      state: "Exitoso",
-      module: "Reparacion"
+        date: now.toISOString().split('T')[0], // Obtiene la fecha en formato YYYY-MM-DD
+        time: now.toTimeString().split(' ')[0], // Obtiene la hora en formato HH:mm:ss
+        userName: userInfo.username,
+        event: "Reparacion Duplicados",
+        details: "El usuario " + userInfo.username + " ha eliminado duplicados de " + fileName + ".",
+        state: "Exitoso",
+        module: "Reparacion"
     };
 
     // Enviar el log al backend

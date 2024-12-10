@@ -3,7 +3,6 @@ from flask_cors import CORS
 from flask_pymongo import PyMongo
 from datetime import datetime
 from config import Config
-from models import get_all_logs
 
 mongo = PyMongo()
 
@@ -21,7 +20,7 @@ def insert_logs():
         if not data or not isinstance(data, dict): 
             return jsonify({"error": "Datos inválidos"}), 400
         
-        required_fields = ["timestamp", "userName", "event", "details", "state", "module"]
+        required_fields = ["date", "time" , "userName", "event", "details", "state", "module"]
         missing_fields = [field for field in required_fields if field not in data]
 
         if missing_fields:
@@ -40,6 +39,38 @@ def get_logs():
     except Exception as e:
         app.logger.error(f"Error al obtener los logs: {str(e)}")
         return jsonify({"error": "Error interno del servidor"}), 500
+
+def get_all_logs():
+    # Accede a la colección 'logs'
+    logs_collection = mongo.db.logs
+    
+    # Obtiene todos los documentos de la colección y selecciona solo los campos necesarios
+    logs = logs_collection.find({}, {
+        '_id': 0,
+        'date': 1,
+        'time': 1,
+        'userName': 1,
+        'event': 1,
+        'details': 1,
+        'state': 1,
+        'module': 1
+    })
+
+    # Procesa los documentos para convertir ObjectId a string y mantener los campos esperados
+    processed_logs = [
+        {
+            'date': log.get('date', 'N/A'),
+            'time': log.get('time', 'N/A'),
+            'userName': log.get('userName', 'N/A'),
+            'event': log.get('event', 'Unknown'),
+            'details': log.get('details', 'N/A'),  # Valor por defecto si falta el campo
+            'state': log.get('state', 'Unknown'),
+            'module': log.get('module', 'Unknown')
+        }
+        for log in logs
+    ]
+
+    return processed_logs
 
 
 if __name__ == '__main__':

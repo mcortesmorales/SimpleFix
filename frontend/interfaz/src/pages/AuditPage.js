@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './AuditPage.css';
 
 const LogsPage = () => {
   const [logs, setLogs] = useState([]);
@@ -9,7 +10,7 @@ const LogsPage = () => {
     const fetchLogs = async () => {
       try {
         const response = await axios.get(
-            'http://localhost:5002/insert_logs',
+            'http://localhost:5002/get_logs',
             {
               headers: {
                 "Content-Type": "application/json",
@@ -38,6 +39,7 @@ const LogsPage = () => {
             <thead>
               <tr>
                 <th>Fecha</th>
+                <th>Hora</th>
                 <th>Nombre de Usuario</th>
                 <th>Evento</th>
                 <th>Detalles</th>
@@ -46,16 +48,17 @@ const LogsPage = () => {
               </tr>
             </thead>
             <tbody>
-              {logs.map((log, index) => (
-                <tr key={index}>
-                  <td>{new Date(log.timestamp).toLocaleString()}</td>
-                  <td>{log.userName}</td>
-                  <td>{log.event}</td>
-                  <td>{log.details}</td>
-                  <td>{log.state}</td>
-                  <td>{log.module}</td>
-                </tr>
-              ))}
+            {logs.map((log, index) => (
+                  <tr key={index}>
+                    <td>{log.date}</td>
+                    <td>{log.time}</td>
+                    <td>{log.userName}</td>
+                    <td>{log.event}</td>
+                    <td>{log.details}</td>
+                    <td>{log.state}</td>
+                    <td>{log.module}</td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
