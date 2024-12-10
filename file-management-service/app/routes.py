@@ -216,6 +216,9 @@ def repair_duplicates(filename):
     df.sort_values(by=["rut", "timestamp"], inplace=True)
     df = df.reset_index(drop=True)
 
+    # Contador de modificados
+    modificados = 0
+
     # Procesar duplicados y crear una lista de filas ajustadas
     adjusted_rows = []
     for i, row in df.iterrows():
@@ -227,14 +230,14 @@ def repair_duplicates(filename):
 
         if row["rut"] == previous_row["rut"] and row["entrada_salida"] == '01':
             time_difference = row["timestamp"] - previous_row["timestamp"]
-            
+
             # Buscar una salida intermedia entre las dos entradas
             salida_found = any(
                 df.iloc[j]["entrada_salida"] == '03' and df.iloc[j]["rut"] == row["rut"]
                 for j in range(i - 1, i)
             )
 
-            # Solo si no hay salida intermedia y la diferencia de tiempo es menor a 5 minutos
+            # Solo si no hay salida intermedia y la diferencia de tiempo es menor a 3 minutos
             if time_difference < timedelta(minutes=3) and not salida_found:
                 # Ajustar el registro: convertir la segunda marca de entrada en salida y crear un nuevo registro de entrada
                 salida_row = row.copy()
@@ -245,11 +248,10 @@ def repair_duplicates(filename):
                 # Agregar los ajustes
                 adjusted_rows.append(salida_row)
                 adjusted_rows.append(entrada_row)
+                modificados += 1  # Incrementar el contador
                 continue
 
         adjusted_rows.append(row)
-
-
 
     # Convertir de nuevo a DataFrame y ordenar por timestamp
     adjusted_df = pd.DataFrame(adjusted_rows)
@@ -270,4 +272,6 @@ def repair_duplicates(filename):
     repaired_file_path = os.path.join(UPLOAD_FOLDER, filename)
     adjusted_df.to_csv(repaired_file_path, index=False, header=False, float_format="%.2f")
 
-    return jsonify({'repairedData': adjusted_df.to_dict(orient='records')}), 200
+    # Incluir el número de modificados en la respuesta
+    return jsonify({'repairedData': adjusted_df.to_dict(orient='records'), 'modificados': modificados}), 200
+

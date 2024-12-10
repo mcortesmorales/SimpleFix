@@ -9,15 +9,12 @@ const LogsPage = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const response = await axios.get(
-            'http://localhost:5002/get_logs',
-            {
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          ); // Ajusta la URL según tu endpoint
-        setLogs(response.data.logs); // Asegúrate de que 'logs' sea el formato esperado desde el backend
+        const response = await axios.get('http://localhost:5002/get_logs', {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        setLogs(response.data.logs);
       } catch (error) {
         setError('Error al obtener los logs.');
         console.error('Error al obtener los logs', error);
@@ -40,7 +37,7 @@ const LogsPage = () => {
               <tr>
                 <th>Fecha</th>
                 <th>Hora</th>
-                <th>Nombre de Usuario</th>
+                <th>Usuario</th>
                 <th>Evento</th>
                 <th>Detalles</th>
                 <th>Estado</th>
@@ -48,17 +45,17 @@ const LogsPage = () => {
               </tr>
             </thead>
             <tbody>
-            {logs.map((log, index) => (
-                  <tr key={index}>
-                    <td>{log.date}</td>
-                    <td>{log.time}</td>
-                    <td>{log.userName}</td>
-                    <td>{log.event}</td>
-                    <td>{log.details}</td>
-                    <td>{log.state}</td>
-                    <td>{log.module}</td>
-                  </tr>
-                ))}
+              {logs.map((log, index) => (
+                <tr key={index}>
+                  <td>{log.date}</td>
+                  <td>{log.time}</td>
+                  <td>{log.userName}</td>
+                  <td>{log.event}</td>
+                  <td>{log.details}</td>
+                  <td>{log.state}</td>
+                  <td>{log.module}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

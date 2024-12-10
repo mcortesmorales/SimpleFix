@@ -44,7 +44,7 @@ const DupRepairPage = () => {
         fetchFiles();
         fetchFileData(selectedFile);
         setDiagnosisResults(null);
-        setInfoInLogs(selectedFile);
+        setInfoInLogs(selectedFile,data.modificados);
       } else {
         console.error("Error al reparar duplicados:", response.statusText);
       }
@@ -55,7 +55,7 @@ const DupRepairPage = () => {
     }
   };
 
-  const setInfoInLogs = async (fileName) => {
+  const setInfoInLogs = async (fileName,modificados) => {
   if (!fileName) {
     console.error("El nombre del archivo es obligatorio para registrar en los logs.");
     return;
@@ -94,12 +94,12 @@ const DupRepairPage = () => {
         time: now.toTimeString().split(' ')[0], // Obtiene la hora en formato HH:mm:ss
         userName: userInfo.username,
         event: "Reparacion Duplicados",
-        details: "El usuario " + userInfo.username + " ha eliminado duplicados de " + fileName + ".",
+        details: "El usuario " + userInfo.username + " ha eliminado " + modificados + " elementos de " + fileName + ".",
         state: "Exitoso",
         module: "Reparacion"
     };
 
-    // Enviar el log al backend
+    // Enviar el log al backend de auditoria
     const saveResponse = await axios.post(
       'http://localhost:5002/insert_logs', 
       log,
