@@ -15,25 +15,28 @@ services:
     depends_on:
       - auth-db
 
-  # Microservicio de Gestión de Archivos (Flask + Pandas)
+  # Microservicio de Gestión de Archivos (Flask + Pandas + MongoDB)
   file-management-service:
     build: ./file-management-service
     ports:
       - "5001:5000"
     environment:
+      - MONGO_URI=mongodb://filemanagement-db:27017/filemanagementdb
       - PYTHONUNBUFFERED=1
       - FLASK_ENV=development  # Modo desarrollo
       - FLASK_DEBUG=1  # Habilitar debug
     volumes:
       - ./file-management-service:/app
+    depends_on:
+      - filemanagement-db  # Asegura que espere a que MongoDB esté listo
 
-    # Microservicio de Gestión de Horario (Flask + Pandas + MongoDB)
+  # Microservicio de Gestión de Horario (Flask + Pandas + MongoDB)
   file-schedule-service:
     build: ./file-schedule-service
     ports:
       - "5003:5000"
     environment:
-      - MONGO_URI=mongodb://fileschedule-db:27017/filescheduledb  # Agregar MongoDB específico para gestión de archivos
+      - MONGO_URI=mongodb://fileschedule-db:27017/filescheduledb
       - PYTHONUNBUFFERED=1
       - FLASK_ENV=development  # Modo desarrollo
       - FLASK_APP=app.py
@@ -41,7 +44,7 @@ services:
     volumes:
       - ./file-schedule-service:/app
     depends_on:
-      - fileschedule-db  # Dependencia para que el servicio espere a que MongoDB esté listo
+      - fileschedule-db
 
   # Microservicio de Auditoría (Flask + MongoDB)
   audit-service:
@@ -70,7 +73,7 @@ services:
       - WATCHPACK_POLLING=true
       - HOST=0.0.0.0
 
-  # Base de datos para autenticación y auditoría (MongoDB)
+  # Base de datos para autenticación
   auth-db:
     image: mongo:5.0
     volumes:
@@ -88,7 +91,14 @@ services:
     volumes:
       - fileschedule-db-data:/data/db
 
+  # Base de datos para el microservicio de gestión de archivos
+  filemanagement-db:
+    image: mongo:5.0
+    volumes:
+      - filemanagement-db-data:/data/db
+
 volumes:
   auth-db-data:
   audit-db-data:
   fileschedule-db-data:
+  filemanagement-db-data:

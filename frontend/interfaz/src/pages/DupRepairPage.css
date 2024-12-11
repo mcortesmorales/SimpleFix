@@ -34,3 +34,15 @@
   background-color: #f8f9fa; /* Cambia ligeramente el fondo */
   cursor: pointer; /* Añade el cursor tipo "mano" */
 }
+
+.group-inactive {
+  opacity: 0.5; /* Reduce la opacidad */
+  pointer-events: none; /* Deshabilita la interacción */
+  background-color: #f8f9fa; /* Fondo claro */
+  color: #6c757d; /* Texto gris */
+}
+
+.group-inactive .form-check-input,
+.group-inactive .btn {
+  pointer-events: auto; /* Habilita interacción con el checkbox y botones */
+}

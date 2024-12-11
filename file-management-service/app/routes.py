@@ -271,3 +271,56 @@ def repair_duplicates(filename):
     adjusted_df.to_csv(repaired_file_path, index=False, header=False, float_format="%.2f")
 
     return jsonify({'repairedData': adjusted_df.to_dict(orient='records')}), 200
+
+
+@upload_bp.route('/time-condition', methods=['POST'])
+def create_time_condition():
+    data = request.json
+    start_time = data.get("start_time")
+    end_time = data.get("end_time")
+    interval = data.get("interval")
+
+    if not (start_time and end_time and interval is not None):
+        return jsonify({"error": "Información incompleta"}), 400
+
+    condition_id = db.time_conditions.insert_one({
+        "start_time": start_time,
+        "end_time": end_time,
+        "interval": interval
+    }).inserted_id
+
+    return jsonify({"message": "Condición de tiempo creada", "id": str(condition_id)}), 201
+
+# Obtener todas las condiciones de tiempo
+@upload_bp.route('/time-conditions', methods=['GET'])
+def get_time_conditions():
+    conditions = list(db.time_conditions.find({}, {"_id": 1, "start_time": 1, "end_time": 1, "interval": 1}))
+    for condition in conditions:
+        condition["_id"] = str(condition["_id"])
+    return jsonify(conditions), 200
+
+# crear o actualizar grupo
+@upload_bp.route('/group', methods=['POST'])
+def create_or_update_group():
+    """Crea o actualiza un grupo con un intervalo predeterminado y lista de miembros"""
+    data = request.json
+    group = data.get("group")
+    default_interval = data.get("default_interval")
+    members = data.get("members", [])
+
+    if not group or default_interval is None or not isinstance(members, list):
+        return jsonify({"error": "Información incompleta o inválida"}), 400
+
+    db.group_intervals.update_one(
+        {"group": group},
+        {"$set": {"default_interval": default_interval, "members": members}},
+        upsert=True
+    )
+    return jsonify({"message": f"Grupo '{group}' guardado con intervalo {default_interval} y {len(members)} miembros."}), 200
+
+#obtener todos los grupos
+@upload_bp.route('/groups', methods=['GET'])
+def get_groups():
+    """Obtiene todos los grupos con su intervalo predeterminado y lista de miembros"""
+    groups = list(db.group_intervals.find({}, {"_id": 0}))
+    return jsonify(groups), 200
