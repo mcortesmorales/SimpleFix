@@ -1,11 +1,30 @@
 from flask import Blueprint, request, jsonify, render_template
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from datetime import datetime
-from models import collection
-from models import db
+from flask import current_app
 
-audit_bp = Blueprint('audit', __name__)
+audit_bp = Blueprint('audit', __name__, url_prefix='/api')
 
+@audit_bp.route("/insert_logs", methods=['POST','GET'])
+def insert_logs():
+    try:
+        data = request.json
+        if not data or not isinstance(data, dict): 
+            return jsonify({"error": "datos invalidos"}),
+        result = current_app.mongo.db.audit_logs.insert_one(data)
+        return jsonify({"inserted_i": str(result.inserted_id)}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@audit_bp.route("/get_logs", methods=['GET'])
+def get_logs():
+    try:
+        documents = list(current_app.mongo.db.audit_logs.find())
+        return jsonify(documents), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+"""
 # Inicializa la base de datos si no existe 
 def init_db(): 
     if 'audit_logs' not in db.list_collection_names(): 
@@ -39,7 +58,7 @@ def add_change():
     return jsonify({"message": "Change added successfully"}), 201
 
 
-"""
+
 @audit_bp.route('/audit', methods=['POST'])
 def record_audit():
     data = request.get_json()

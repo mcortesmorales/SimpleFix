@@ -1,7 +1,24 @@
-.container-fluid {
-    padding: 20px;
+.table th, .table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
-.table-responsive {
-    max-height: 400px;
-    overflow-y: auto;
+
+.table td.text-wrap {
+  white-space: normal;
+}
+
+.text-center th {
+  text-align: center;
+}
+
+/* Añadir líneas entre los elementos */
+.table-bordered {
+  border: 1px solid #dee2e6;
+}
+
+.table-bordered th,
+.table-bordered td {
+  border: 1px solid #dee2e6;
 }

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { AppBar, Toolbar, Typography, Menu, MenuItem, IconButton, Box } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
+import { logsGen } from '../modules/logUtils';
 
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -16,51 +17,71 @@ const Header = () => {
     setAnchorEl(null);
   };
 
+  const handleLogout = async () => {
+    await logsGen({
+      event: 'Cierre de Sesion',
+      detail: `El usuario ${user.username} ha cerrado sesión.`,
+      state: 'Exitoso',
+      module: 'Autenticación',
+    });
+    logout();
+    handleClose();
+  };
+
   if (!isAuthenticated()) return null;
 
   return (
     <AppBar position="fixed">
       <Toolbar>
-        {/* Título SimpleFix con estilo y funcionalidad de enlace */}
+        {/* Título con funcionalidad de enlace */}
         <Typography
           variant="h6"
-          component={Link} // Cambiado a Link para redirigir
-          to="/" // Ruta a la que redirige
+          component={Link}
+          to="/"
           sx={{
             flexGrow: 1,
-            textDecoration: 'none', // Eliminar subrayado
-            color: 'white', // Color del texto
+            textDecoration: 'none',
+            color: 'white',
             '&:hover': {
-              color: 'lightblue', // Color al pasar el ratón
-              transition: 'color 0.3s ease' // Transición suave
-            }
+              color: 'lightblue',
+              transition: 'color 0.3s ease',
+            },
           }}
         >
           SimpleFix
         </Typography>
-        
+
         <div>
-          {/* Estilo para los enlaces */}
-          {['/', '/visualize-page', '/repair', '/admin','/upload-menu','/api/logs'].map((path, index) => (
+          {/* Filtrar rutas visibles según el rol */}
+          {[
+            { path: '/', label: 'Inicio' },
+            { path: '/visualize-page', label: 'Visualización' },
+            { path: '/repair', label: 'Reparar' },
+            { path: '/upload-menu', label: 'Subir Archivos' },
+            { path: '/get_logs', label: 'Registro de Logs' },
+            ...(user?.role === 'Administrador'
+              ? [{ path: '/admin', label: 'Panel de Administración' }]
+              : []),
+          ].map((route, index) => (
             <Link
               key={index}
-              to={path}
+              to={route.path}
               style={{
                 color: 'white',
                 marginRight: 16,
-                textDecoration: 'none', // Eliminar subrayado
+                textDecoration: 'none',
                 '&:hover': {
-                  color: 'lightblue', // Color al pasar el ratón
-                  transition: 'color 0.3s ease' // Transición suave
-                }
+                  color: 'lightblue',
+                  transition: 'color 0.3s ease',
+                },
               }}
             >
-              {path === '/' ? 'Inicio' : path === '/upload-menu' ? 'Subir Archivos' : path === '/visualize-page' ? 'Visualización' : path === '/repair' ? 'Reparar' : path === '/admin' ? 'Panel de administración': path === '/api/logs' ? 'Logs de auditoria' : null}
+              {route.label}
             </Link>
           ))}
         </div>
-        
-        {/* Contenedor del nombre de usuario e icono con estilo distintivo */}
+
+        {/* Contenedor del nombre de usuario e icono */}
         <Box
           sx={{
             display: 'flex',
@@ -68,7 +89,7 @@ const Header = () => {
             backgroundColor: 'rgba(255, 255, 255, 0.15)',
             padding: '4px 12px',
             borderRadius: '20px',
-            marginLeft: '16px'
+            marginLeft: '16px',
           }}
         >
           <Typography variant="subtitle1" style={{ color: 'white', marginRight: 4 }}>
@@ -87,8 +108,10 @@ const Header = () => {
             open={Boolean(anchorEl)}
             onClose={handleClose}
           >
-            <MenuItem onClick={handleClose} component={Link} to="/configuracion">Configuración</MenuItem>
-            <MenuItem onClick={() => { logout(); handleClose(); }}>Cerrar sesión</MenuItem>
+            <MenuItem onClick={handleClose} component={Link} to="/configuracion">
+              Configuración
+            </MenuItem>
+            <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
           </Menu>
         </Box>
       </Toolbar>

@@ -3,6 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import './FileDrop.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { logsGen } from '../modules/logUtils'
 
 const FileDrop = ({ fetchFileList }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -49,6 +50,13 @@ const FileDrop = ({ fetchFileList }) => {
 
       setSelectedFile(null);  // Limpiar el archivo después de subirlo
       fetchFileList(); // Refrescar la lista de archivos
+      await logsGen(
+        { 
+          event: 'Carga de archivo de reloj', 
+          detail: 'Se ha subido al sistema el archivo de reloj '+ selectedFile.name +'.', 
+          state: 'Exitoso', 
+          module: 'Subir archivos' 
+      });
     } catch (error) {
       if (error.response?.status === 409 && error.response?.data?.overwrite) {
         const shouldOverwrite = window.confirm(error.response.data.message);

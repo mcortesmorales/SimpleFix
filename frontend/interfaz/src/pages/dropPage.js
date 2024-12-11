@@ -3,6 +3,7 @@ import axios from 'axios';
 import FileDrop from '../components/FileDrop';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useNavigate } from 'react-router-dom'; // Importa useNavigate
+import { logsGen } from '../modules/logUtils'
 
 const DropPage = () => {
   const [fileList, setFileList] = useState([]);
@@ -37,6 +38,13 @@ const DropPage = () => {
         await axios.delete(`http://localhost:5001/files/${fileName}`);
         alert('Archivo eliminado correctamente');
         fetchFileList(); // Refresca la lista después de eliminar
+        await logsGen(
+          { 
+            event: 'Eliminacion de archivo', 
+            detail: 'Se ha eliminado el archivo '+ fileName +'.', 
+            state: 'Exitoso', 
+            module: 'Subir archivos' 
+        });
       } catch (error) {
         console.error('Error al eliminar el archivo:', error);
         alert('Error al eliminar el archivo');

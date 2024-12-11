@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../AuthContext';
+import { logsGen } from '../modules/logUtils'
 
 const SettingsPage = () => {
   const { token } = useAuth();
@@ -16,6 +17,13 @@ const SettingsPage = () => {
 
     if (newPassword !== confirmNewPassword) {
       setErrorMessage('Las nuevas contraseñas no coinciden');
+      await logsGen(
+        { 
+          event: "Cambio de contraseña", 
+          detail: "Se intento realizar un cambio en la contraseña del usuario.",
+          state: 'Fallido', 
+          module: "Gestion de usuario" 
+      });
       return;
     }
 
@@ -35,9 +43,23 @@ const SettingsPage = () => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmNewPassword('');
+      await logsGen(
+        { 
+          event: "Cambio de contraseña", 
+          detail: "Se realizo un cambio de contraseña por parte del usuario.",
+          state: 'Exitoso', 
+          module: "Gestion de usuario" 
+      });
     } catch (error) {
       setErrorMessage(error.response?.data?.message || 'Error al cambiar la contraseña');
       setSuccessMessage('');
+      await logsGen(
+        { 
+          event: "Cambio de contraseña",  
+          detail: "Se intento realizar un cambio en la contraseña del usuario.",
+          state: 'Fallido', 
+          module: "Gestion de usuario" 
+      });
     }
   };
 

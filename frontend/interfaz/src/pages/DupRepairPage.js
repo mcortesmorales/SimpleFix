@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FaDownload } from 'react-icons/fa';
 import './DupRepairPage.css';
+import { logsGen } from '../modules/logUtils'
 import axios from 'axios';
 
 const DupRepairPage = () => {
@@ -189,9 +190,22 @@ const DupRepairPage = () => {
         fetchFiles();
         fetchFileData(selectedFile);
         setDiagnosisResults(null);
-        setInfoInLogs(selectedFile);
+        await logsGen(
+          { 
+            event: 'Modificacion de archivo', 
+            detail: 'Se han eliminado '+ data.modificados +' elementos del archivo '+ selectedFile +'.', 
+            state: 'Exitoso',
+            module: 'Reparacion' 
+        });
       } else {
         console.error("Error al reparar duplicados:", response.statusText);
+        await logsGen(
+          { 
+            event: 'Modificacion de archivo', 
+            detail: 'Se han intentado eliminar elementos del archivo '+ selectedFile +'.', 
+            state: 'Fallido', 
+            module: 'Reparacion' 
+        });
       }
     } catch (error) {
       console.error("Error al llamar al endpoint de reparación:", error);
