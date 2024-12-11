@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { AppBar, Toolbar, Typography, Menu, MenuItem, IconButton, Box } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
+import { logsGen } from '../modules/logUtils'
 
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -14,6 +15,19 @@ const Header = () => {
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleLogout = async () => { // Llamar a logsGen para registrar el evento de cierre de sesión 
+    await logsGen(
+      { 
+        event: 'Cierre de Sesion', 
+        detail: `El usuario ${user.username} ha cerrado sesión.`, 
+        state: 'Exitoso', 
+        module: 'Autenticación' 
+      }
+    ); // Luego, proceder con el cierre de sesión 
+    logout(); 
+    handleClose();
   };
 
   if (!isAuthenticated()) return null;
@@ -88,7 +102,7 @@ const Header = () => {
             onClose={handleClose}
           >
             <MenuItem onClick={handleClose} component={Link} to="/configuracion">Configuración</MenuItem>
-            <MenuItem onClick={() => { logout(); handleClose(); }}>Cerrar sesión</MenuItem>
+            <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
           </Menu>
         </Box>
       </Toolbar>

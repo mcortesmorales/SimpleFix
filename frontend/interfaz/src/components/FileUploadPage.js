@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { logsGen } from '../modules/logUtils'
 
 const FileUploadPage = () => {
     const [selectedFiles, setSelectedFiles] = useState({ horariosAsignados: null, horariosCreados: null });
@@ -37,6 +38,13 @@ const FileUploadPage = () => {
             const response = await axios.post('http://localhost:5003/upload', formData);
             setMessage(response.data.message || 'Archivos subidos exitosamente.');
             setIsSuccess(true); // Marcar como éxito
+            await logsGen(
+                { 
+                  event: "Carga de archivo de horario", 
+                  detail: "Se han subido los archivos de horario asignado y creado al sistema.",
+                  state: 'Exitoso', 
+                  module: "Subir archivos" 
+              });
         } catch (error) {
             setMessage('Error al subir los archivos. Intenta nuevamente.');
             setIsSuccess(false); // Marcar como error

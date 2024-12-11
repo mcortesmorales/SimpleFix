@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
 import axios from 'axios';
+import { logsGen } from '../modules/logUtils'
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -10,14 +11,6 @@ const LoginPage = () => {
   const { login } = useAuth();
   const [shakeUsername, setShakeUsername] = useState(false); // Estado para el efecto shake
   const [shakePassword, setShakePassword] = useState(false); // Estado para el efecto shake
-
-  const logEvent = async (log) => {
-    try {
-      await axios.post('http://localhost:5002/insert_logs', log);
-    } catch (error) {
-      console.error('Error al enviar el log:', error);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,18 +25,13 @@ const LoginPage = () => {
       setSuccessMessage('Inicio de sesión exitoso.');
       setShakeUsername(false);
       setShakePassword(false);
-
-      // Enviar log de éxito
-      const log = {
-        date: now.toISOString().split('T')[0],
-        time: now.toTimeString().split(' ')[0],
-        userName: username,
-        event: "Inicio de Sesión",
-        details: "El usuario " + username + " ha iniciado sesión exitosamente.",
-        state: "Exitoso",
-        module: "Autenticación"
-      };
-      await logEvent(log);
+      await logsGen(
+        { 
+          event: "Inicio de Sesión", 
+          detail: "Se ha iniciado sesión exitosamente.",
+          state: 'Exitoso', 
+          module: "Autenticación" 
+      });
 
       // Ocultar el mensaje de éxito después de 3 segundos
       setTimeout(() => {
@@ -54,18 +42,6 @@ const LoginPage = () => {
       setShakeUsername(true);
       setShakePassword(true);
       console.error(errorMessage);
-
-      // Enviar log de fallo
-      const log = {
-        date: now.toISOString().split('T')[0],
-        time: now.toTimeString().split(' ')[0],
-        userName: username,
-        event: "Inicio de Sesión",
-        details: "El usuario " + username + " ha fallado al intentar iniciar sesión.",
-        state: "Fallido",
-        module: "Autenticación"
-      };
-      await logEvent(log);
 
       // Limpiar el estado de shake después de 500ms (duración de la animación)
       setTimeout(() => {

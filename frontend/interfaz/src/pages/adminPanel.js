@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { logsGen } from '../modules/logUtils'
 
 const AdminPanel = () => {
   const [username, setUsername] = useState('');
@@ -37,9 +38,23 @@ const AdminPanel = () => {
         setPassword('');
         setRole('');
         setError('');
+        await logsGen(
+          { 
+            event: "Registro de usuario", 
+            detail: "Se registro un nuevo "+ role +" en el sistema, bajo el nombre de " + username +".",
+            state: 'Exitoso', 
+            module: "Panel administrador" 
+        });
       } catch (error) {
         setError(error.response?.data?.message || 'Error al agregar el usuario');
         console.error('Error al agregar usuario', error);
+        await logsGen(
+          { 
+            event: "Registro de usuario", 
+            detail: "Se intento registrar un nuevo usuario en el sistema.",
+            state: 'Fallido', 
+            module: "Panel administrador" 
+        });
       }
     }
   };
@@ -48,8 +63,22 @@ const AdminPanel = () => {
     try {
       await axios.delete(`http://localhost:5000/auth/users/${userToDelete}`);
       setUsers(users.filter(user => user.username !== userToDelete));
+      await logsGen(
+        { 
+          event: "Registro de usuario", 
+          detail: "Se ha eliminado el usuario " + userToDelete + " del sistema.",
+          state: 'Exitoso', 
+          module: "Panel administrador" 
+      });
     } catch (error) {
       console.error('Error al eliminar el usuario', error);
+      await logsGen(
+        { 
+          event: "Registro de usuario", 
+          detail: "Se ha intentado eliminadar el usuario " + userToDelete + " del sistema.",
+          state: 'Fallido', 
+          module: "Panel administrador" 
+      });
     }
   };
 

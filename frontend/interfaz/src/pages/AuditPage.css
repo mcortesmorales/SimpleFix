@@ -1,61 +1,24 @@
-.container {
-    max-width: 1200px;
-    margin: auto;
-  }
-  
-  h2 {
-    font-family: 'Roboto', sans-serif;
-    font-weight: 600;
-    color: #343a40;
-  }
-  
-  .card {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-  }
-  
-  .table {
-    margin-bottom: 0;
-  }
-  
-  .table thead {
-    background-color: #343a40;
-    color: #fff;
-  }
-  
-  .table thead th {
-    text-align: center;
-    font-weight: bold;
-  }
-  
-  .table tbody tr {
-    transition: background-color 0.3s ease;
-  }
-  
-  .table tbody tr:hover {
-    background-color: #f1f3f5;
-  }
-  
-  .table td {
-    vertical-align: middle;
-    text-align: center;
-  }
-  
-  .text-danger {
-    font-size: 1.1rem;
-    font-weight: bold;
-  }
-  
-  .text-center {
-    font-family: 'Arial', sans-serif;
-  }
-  
-  .card p {
-    margin-bottom: 0;
-  }
-  
-  .shadow-sm {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-  
+.table th, .table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.table td.text-wrap {
+  white-space: normal;
+}
+
+.text-center th {
+  text-align: center;
+}
+
+/* Añadir líneas entre los elementos */
+.table-bordered {
+  border: 1px solid #dee2e6;
+}
+
+.table-bordered th,
+.table-bordered td {
+  border: 1px solid #dee2e6;
+}

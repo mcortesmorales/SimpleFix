@@ -32,32 +32,34 @@ const LogsPage = () => {
         <p className="text-center">No hay logs disponibles.</p>
       ) : (
         <div className="card p-4 shadow-sm">
-          <table className="table table-striped">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Usuario</th>
-                <th>Evento</th>
-                <th>Detalles</th>
-                <th>Estado</th>
-                <th>Módulo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map((log, index) => (
-                <tr key={index}>
-                  <td>{log.date}</td>
-                  <td>{log.time}</td>
-                  <td>{log.userName}</td>
-                  <td>{log.event}</td>
-                  <td>{log.details}</td>
-                  <td>{log.state}</td>
-                  <td>{log.module}</td>
+          <div className="table-responsive">
+            <table className="table table-striped table-bordered">
+              <thead className="text-center">
+                <tr>
+                  <th>Fecha</th>
+                  <th>Hora</th>
+                  <th>Usuario</th>
+                  <th>Evento</th>
+                  <th>Detalles</th>
+                  <th>Estado</th>
+                  <th>Módulo</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {logs.map((log, index) => (
+                  <tr key={index}>
+                    <td>{log.date}</td>
+                    <td>{log.time}</td>
+                    <td>{log.userName}</td>
+                    <td>{log.event}</td>
+                    <td className="text-wrap">{log.details}</td>
+                    <td>{log.state}</td>
+                    <td>{log.module}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

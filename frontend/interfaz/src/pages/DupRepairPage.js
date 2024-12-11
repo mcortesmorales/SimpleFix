@@ -3,7 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FaDownload } from 'react-icons/fa';
 import './DupRepairPage.css';
-import axios from 'axios';
+import { logsGen } from '../modules/logUtils'
 
 const DupRepairPage = () => {
   const [files, setFiles] = useState([]);
@@ -44,9 +44,22 @@ const DupRepairPage = () => {
         fetchFiles();
         fetchFileData(selectedFile);
         setDiagnosisResults(null);
-        setInfoInLogs(selectedFile,data.modificados);
+        await logsGen(
+          { 
+            event: 'Modificacion de archivo', 
+            detail: 'Se han eliminado '+ data.modificados +' elementos del archivo '+ selectedFile +'.', 
+            state: 'Exitoso',
+            module: 'Reparacion' 
+        });
       } else {
         console.error("Error al reparar duplicados:", response.statusText);
+        await logsGen(
+          { 
+            event: 'Modificacion de archivo', 
+            detail: 'Se han intentado eliminar elementos del archivo '+ selectedFile +'.', 
+            state: 'Fallido', 
+            module: 'Reparacion' 
+        });
       }
     } catch (error) {
       console.error("Error al llamar al endpoint de reparación:", error);
@@ -54,71 +67,6 @@ const DupRepairPage = () => {
       setIsLoading(false);
     }
   };
-
-  const setInfoInLogs = async (fileName,modificados) => {
-  if (!fileName) {
-    console.error("El nombre del archivo es obligatorio para registrar en los logs.");
-    return;
-  }
-
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error("Token no encontrado. El usuario debe estar autenticado para registrar logs.");
-    return;
-  }
-
-  try {
-    // Función para obtener la información del usuario
-    const fetchUserInfo = async () => {
-      const response = await axios.get('http://localhost:5000/auth/user-info', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.status === 200) {
-        return response.data; // Suponiendo que el cuerpo tiene los datos del usuario
-      } else {
-        throw new Error(`Error al obtener información del usuario: ${response.statusText}`);
-      }
-    };
-
-    // Obtener la información del usuario
-    const userInfo = await fetchUserInfo();
-    if (!userInfo || !userInfo.username || !userInfo.role) {
-      console.error("Faltan datos clave en la información del usuario.");
-      return;
-    }
-
-    // Construir datos para el log
-    const now = new Date();
-    const log = {
-        date: now.toISOString().split('T')[0], // Obtiene la fecha en formato YYYY-MM-DD
-        time: now.toTimeString().split(' ')[0], // Obtiene la hora en formato HH:mm:ss
-        userName: userInfo.username,
-        event: "Reparacion Duplicados",
-        details: "El usuario " + userInfo.username + " ha eliminado " + modificados + " elementos de " + fileName + ".",
-        state: "Exitoso",
-        module: "Reparacion"
-    };
-
-    // Enviar el log al backend de auditoria
-    const saveResponse = await axios.post(
-      'http://localhost:5002/insert_logs', 
-      log,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    if (saveResponse.status === 201) {
-      console.log('Log guardado exitosamente:', saveResponse.data);
-    } else {
-      console.error(`Error al guardar el log: ${saveResponse.statusText}`);
-    }
-  } catch (error) {
-    console.error('Error en setInfoInLogs:', error.message);
-  }
-};
-
 
   const fetchFiles = async () => {
     try {
