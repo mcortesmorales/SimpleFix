@@ -169,7 +169,14 @@ const DupRepairPage = () => {
       if (response.ok) {
         const data = await response.json();
         setDiagnosisResults(data);
-        setFileData(data.markedData);
+  
+        // Ordena los datos de diagnóstico por la categoría "isDuplicate" en orden descendente
+        const sortedData = [...data.markedData].sort((a, b) => {
+          if (a.isDuplicate === b.isDuplicate) return 0;
+          return a.isDuplicate ? -1 : 1;
+        });
+  
+        setFileData(sortedData);
       } else {
         console.error("Error al diagnosticar duplicados:", response.statusText);
       }
@@ -179,6 +186,7 @@ const DupRepairPage = () => {
       setIsLoading(false);
     }
   };
+  
 
   const handleRepair = async () => {
     if (!selectedFile) return;
