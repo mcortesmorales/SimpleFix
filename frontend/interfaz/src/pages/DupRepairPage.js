@@ -45,21 +45,21 @@ const DupRepairPage = () => {
         fetchFileData(selectedFile);
         setDiagnosisResults(null);
         await logsGen(
-          { 
-            event: 'Modificacion de archivo', 
-            detail: 'Se han eliminado '+ data.modificados +' elementos del archivo '+ selectedFile +'.', 
+          {
+            event: 'Modificacion de archivo',
+            detail: 'Se han eliminado ' + data.modificados + ' elementos del archivo ' + selectedFile + '.',
             state: 'Exitoso',
-            module: 'Reparacion' 
-        });
+            module: 'Reparacion'
+          });
       } else {
         console.error("Error al reparar duplicados:", response.statusText);
         await logsGen(
-          { 
-            event: 'Modificacion de archivo', 
-            detail: 'Se han intentado eliminar elementos del archivo '+ selectedFile +'.', 
-            state: 'Fallido', 
-            module: 'Reparacion' 
-        });
+          {
+            event: 'Modificacion de archivo',
+            detail: 'Se han intentado eliminar elementos del archivo ' + selectedFile + '.',
+            state: 'Fallido',
+            module: 'Reparacion'
+          });
       }
     } catch (error) {
       console.error("Error al llamar al endpoint de reparación:", error);
@@ -154,14 +154,14 @@ const DupRepairPage = () => {
               <div className="list-group">
                 {files.length > 0 ? (
                   files.map((file, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className={`list-group-item d-flex justify-content-between align-items-center ${file.name === selectedFile ? 'active' : ''} file-item`}
                       onClick={() => handleFileClick(file)}
                       style={{ cursor: 'pointer' }}
                     >
                       <span>{file.name}</span>
-                      <button 
+                      <button
                         className="btn btn-outline-secondary btn-sm download-button"
                         onClick={(event) => handleDownload(file.name, event)}
                       >
@@ -186,7 +186,7 @@ const DupRepairPage = () => {
           <div className="card shadow-sm">
             <div className="card-body">
               <h5 className="text-center">Datos de: {selectedFile || "Selecciona un archivo"}</h5>
-              
+
               {isLoading ? (
                 <div className="text-center my-4">
                   <div className="spinner-border" role="status">
@@ -220,15 +220,27 @@ const DupRepairPage = () => {
                     </thead>
                     <tbody>
                       {fileData.length > 0 ? (
-                        fileData.map((row, index) => (
-                          <tr key={index} className={row.isDuplicate ? 'table-danger' : ''}>
-                            <td>{row.entrada_salida}</td>
-                            <td>{row.rut}</td>
-                            <td>{row.hora}</td>
-                            <td>{row.fecha}</td>
-                            {showDuplicateColumn && <td>{row.isDuplicate ? "Sí" : "No"}</td>}
-                          </tr>
-                        ))
+                        [...fileData]
+                          .sort((a, b) => {
+                            // Asegura que los duplicados aparezcan primero
+                            if (a.isDuplicate && !b.isDuplicate) return -1;
+                            if (!a.isDuplicate && b.isDuplicate) return 1;
+                            // Si ambos son duplicados o no, aplica la lógica de orden actual
+                            if (sortConfig.key) {
+                              if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
+                              if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+                            }
+                            return 0;
+                          })
+                          .map((row, index) => (
+                            <tr key={index} className={row.isDuplicate ? 'table-danger' : ''}>
+                              <td>{row.entrada_salida}</td>
+                              <td>{row.rut}</td>
+                              <td>{row.hora}</td>
+                              <td>{row.fecha}</td>
+                              {showDuplicateColumn && <td>{row.isDuplicate ? "Sí" : "No"}</td>}
+                            </tr>
+                          ))
                       ) : (
                         <tr>
                           <td colSpan={showDuplicateColumn ? 5 : 4} className="text-center">
@@ -237,19 +249,20 @@ const DupRepairPage = () => {
                         </tr>
                       )}
                     </tbody>
+
                   </table>
                 </div>
               )}
 
               <div className="mt-3 text-center">
-                <button 
+                <button
                   className="btn btn-warning me-2"
                   onClick={handleDiagnose}
                   disabled={!selectedFile || isLoading}
                 >
                   Diagnosticar
                 </button>
-                <button 
+                <button
                   className="btn btn-success"
                   onClick={handleRepair}
                   disabled={!selectedFile || isLoading}
@@ -260,7 +273,7 @@ const DupRepairPage = () => {
 
               {diagnosisResults && (
                 <div className="alert alert-info mt-4">
-                  {diagnosisResults.duplicatesCount > 0 
+                  {diagnosisResults.duplicatesCount > 0
                     ? `Se encontraron ${diagnosisResults.duplicatesCount} duplicados en el archivo.`
                     : "No se encontraron duplicados en el archivo."}
                 </div>
