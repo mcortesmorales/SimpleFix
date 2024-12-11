@@ -1,6 +1,9 @@
 import os
 from werkzeug.utils import secure_filename
 from config import Config
+from flask_pymongo import PyMongo
+
+mongo = PyMongo()
 
 def allowed_file(filename):
     """Verifica si el archivo tiene una extensión permitida."""
