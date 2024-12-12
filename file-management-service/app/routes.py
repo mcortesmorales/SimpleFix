@@ -1,6 +1,6 @@
 import os
 from flask import Blueprint, request, jsonify
-from models import allowed_file, save_file
+from models import allowed_file, save_file, save_configurations_model, get_configurations_model
 from config import Config
 import csv
 from flask import send_file
@@ -122,11 +122,37 @@ def download_file(filename):
     # Enviar el archivo para descarga
     return send_file(file_path, as_attachment=True), 200
 
+
+def get_interval_for_rut(config_json,rut, timestamp):
+    config = config_json if isinstance(config_json, dict) else config_json.get_json()
+
+    # Prioridad 1: Group Intervals
+    for group in config["groupIntervals"]:
+        if group["active"] and rut in group["ruts"]:
+            return timedelta(minutes=int(group["interval"]))
+
+    # Prioridad 2: Custom Values
+    for custom in config["customValues"]:
+        if custom["active"]:
+            start_time = datetime.strptime(custom["startTime"], "%H:%M").time()
+            end_time = datetime.strptime(custom["endTime"], "%H:%M").time()
+            if start_time <= timestamp.time() <= end_time:
+                return timedelta(minutes=custom["interval"])
+
+    # Prioridad 3: Default Interval
+    return timedelta(minutes=int(config["defaultInterval"]))
+
+
+
+
 @upload_bp.route('/diagnose/<filename>', methods=['POST'])
 def diagnose_duplicates(filename):
+
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     if not os.path.exists(file_path):
         return jsonify({'message': 'Archivo no encontrado'}), 404
+
+    config = get_configurations_model()
 
     # Leer el archivo y asignar nombres a las columnas
     df = pd.read_csv(file_path, header=None, names=[
@@ -152,17 +178,17 @@ def diagnose_duplicates(filename):
         
         previous_row = adjusted_rows[-1]
         
-        # Chequear si es la misma persona y si la diferencia de tiempo es menor a 5 minutos
+        # Chequear si es la misma persona y si la diferencia de tiempo es menor a 3 minutos
         if row["rut"] == previous_row["rut"] and row["entrada_salida"] == 1:
             time_difference = row["timestamp"] - previous_row["timestamp"]
-            
+            interval = get_interval_for_rut(config,row["rut"], row["timestamp"])
             # Buscar una salida entre las dos entradas
             salida_found = any(
                 df.iloc[j]["entrada_salida"] == 3 and df.iloc[j]["rut"] == row["rut"]
                 for j in range(i - 1, i)  # Chequear solo entre la fila anterior y la actual
             )
             
-            if time_difference < timedelta(minutes=3) and not salida_found:
+            if time_difference < interval and not salida_found:
                 # Marcar como duplicado si no se encontró una salida
                 adjusted_rows.append({**row, "isDuplicate": True})
                 continue
@@ -201,6 +227,8 @@ def repair_duplicates(filename):
     if not os.path.exists(file_path):
         return jsonify({'message': 'Archivo no encontrado'}), 404
 
+    config = get_configurations_model()
+
     # Leer el archivo con formato original
     df = pd.read_csv(file_path, header=None, names=[
         "id", "col2", "entrada_salida", "rut", "col5", "hora", "minuto", "mes", "dia", "anio",
@@ -230,7 +258,7 @@ def repair_duplicates(filename):
 
         if row["rut"] == previous_row["rut"] and row["entrada_salida"] == '01':
             time_difference = row["timestamp"] - previous_row["timestamp"]
-
+            interval = get_interval_for_rut(config,row["rut"], row["timestamp"])
             # Buscar una salida intermedia entre las dos entradas
             salida_found = any(
                 df.iloc[j]["entrada_salida"] == '03' and df.iloc[j]["rut"] == row["rut"]
@@ -238,7 +266,7 @@ def repair_duplicates(filename):
             )
 
             # Solo si no hay salida intermedia y la diferencia de tiempo es menor a 3 minutos
-            if time_difference < timedelta(minutes=3) and not salida_found:
+            if time_difference < interval and not salida_found:
                 # Ajustar el registro: convertir la segunda marca de entrada en salida y crear un nuevo registro de entrada
                 salida_row = row.copy()
                 salida_row["entrada_salida"] = "3"  # Convertir a salida
@@ -329,3 +357,11 @@ def get_groups():
     return jsonify(groups), 200
 
 
+@upload_bp.route("/configurations", methods=["GET"])
+def get_configurations():
+    return get_configurations_model()
+
+@upload_bp.route("/configurations", methods=["POST"])
+def save_configurations():
+    data = request.json
+    return save_configurations_model(data)

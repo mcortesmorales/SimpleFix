@@ -301,3 +301,6 @@ def obtener_trabajadores_por_horario():
             return jsonify({'mensaje': 'No se encontraron trabajadores con el horario asignado especificado'}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+

@@ -27,10 +27,60 @@ const DupRepairPage = () => {
   const [editingValue, setEditingValue] = useState(null); // Valor actualmente en edición
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Estado del modal
 
+  const [originalConfigurations, setOriginalConfigurations] = useState({
+    defaultInterval: 3,
+    groupIntervals: [],
+    customValues: []
+  });
+
 
   // Funciones para manejar la apertura/cierre del modal
   const handleOpenConfigModal = () => setShowConfigModal(true);
   const handleCloseConfigModal = () => setShowConfigModal(false);
+
+
+  const fetchConfigurations = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/configurations');
+      if (response.status === 200) {
+        const data = response.data;
+  
+        // Actualizar los estados con las configuraciones obtenidas
+        setDefaultInterval(data.defaultInterval);
+        setGroupIntervals(data.groupIntervals);
+        setCustomValues(data.customValues);
+  
+        // Guardar el estado original para descartar cambios
+        setOriginalConfigurations(data);
+  
+        console.log('Configuraciones cargadas:', data);
+      } else {
+        console.error('Error al obtener las configuraciones:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error al conectar con la API:', error);
+    }
+  };
+  
+
+  const saveConfigurations = async () => {
+    const configurations = {
+      defaultInterval,
+      groupIntervals,
+      customValues,
+    };
+  
+    try {
+      const response = await axios.post('http://localhost:5001/configurations', configurations);
+      if (response.status === 200) {
+        console.log('Configuraciones guardadas con éxito:', response.data);
+      } else {
+        console.error('Error al guardar las configuraciones:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error al conectar con la API:', error);
+    }
+  };
 
   // Función para agregar un grupo
   const handleAddGroup = () => {
@@ -53,9 +103,8 @@ const DupRepairPage = () => {
   };
 
 
-  // Función para eliminar un grupo
-  const handleRemoveGroup = (group) => {
-    setGroupIntervals(groupIntervals.filter((g) => g !== group));
+  const handleRemoveGroup = (groupId) => {
+    setGroupIntervals(groupIntervals.filter((g) => g.id !== groupId));
   };
 
   const handleAddRut = () => {
@@ -279,6 +328,7 @@ const DupRepairPage = () => {
       setSelectedFile(fileName);
       fetchFileData(fileName);
     }
+    fetchConfigurations(); // Cargar configuraciones desde la API
   }, []);
 
   const fetchFileData = async (fileName) => {
@@ -328,15 +378,17 @@ const DupRepairPage = () => {
   };
 
   const handleApplyChanges = () => {
-    // Lógica para guardar cambios
-    console.log("Cambios aplicados");
+    saveConfigurations(); // Guardar las configuraciones
     setShowConfigModal(false);
   };
 
   const handleDiscardChanges = () => {
-    // Lógica para descartar cambios
-    console.log("Cambios descartados");
-    setShowConfigModal(false);
+    setDefaultInterval(originalConfigurations.defaultInterval);
+    setGroupIntervals(originalConfigurations.groupIntervals);
+    setCustomValues(originalConfigurations.customValues);
+  
+    setShowConfigModal(false); // Cerrar el modal
+    console.log("Cambios descartados, configuraciones restauradas.");
   };
 
 
@@ -796,98 +848,113 @@ const DupRepairPage = () => {
                             ></div>
                           )}
 
-                          {isEditModalOpen && (
-                            <div className="modal d-block pt-5 mt-5">
-                              <div className="modal-dialog">
-                                <div className="modal-content">
-                                  <div className="modal-header">
-                                    <h5 className="modal-title">Editar Valor Personalizado</h5>
-                                    <button
-                                      type="button"
-                                      className="btn-close"
-                                      onClick={handleCloseEditModal}
-                                    ></button>
-                                  </div>
-                                  <div className="modal-body">
-                                    <div className="mb-3">
-                                      <label className="form-label">Nombre</label>
-                                      <input
-                                        type="text"
-                                        className="form-control"
-                                        value={editingValue?.name || ""}
-                                        onChange={(e) =>
-                                          setEditingValue({ ...editingValue, name: e.target.value })
-                                        }
-                                      />
-                                    </div>
-                                    <div className="mb-3">
-                                      <label className="form-label">Intervalo (minutos)</label>
-                                      <input
-                                        type="number"
-                                        className="form-control"
-                                        value={editingValue?.interval || ""}
-                                        onChange={(e) =>
-                                          setEditingValue({
-                                            ...editingValue,
-                                            interval: parseInt(e.target.value, 10) || 0,
-                                          })
-                                        }
-                                      />
-                                    </div>
-                                    <div className="mb-3">
-                                      <label className="form-label">Hora de Inicio</label>
-                                      <input
-                                        type="time"
-                                        className="form-control"
-                                        value={editingValue?.startTime || ""}
-                                        onChange={(e) =>
-                                          setEditingValue({ ...editingValue, startTime: e.target.value })
-                                        }
-                                      />
-                                    </div>
-                                    <div className="mb-3">
-                                      <label className="form-label">Hora de Fin</label>
-                                      <input
-                                        type="time"
-                                        className="form-control"
-                                        value={editingValue?.endTime || ""}
-                                        onChange={(e) =>
-                                          setEditingValue({ ...editingValue, endTime: e.target.value })
-                                        }
-                                      />
-                                    </div>
-                                    <div className="form-check">
-                                      <input
-                                        className="form-check-input"
-                                        type="checkbox"
-                                        checked={editingValue?.active || false}
-                                        onChange={(e) =>
-                                          setEditingValue({ ...editingValue, active: e.target.checked })
-                                        }
-                                      />
-                                      <label className="form-check-label">Activo</label>
-                                    </div>
-                                  </div>
-                                  <div className="modal-footer">
-                                    <button
-                                      type="button"
-                                      className="btn btn-secondary"
-                                      onClick={handleCloseEditModal}
-                                    >
-                                      Cancelar
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="btn btn-primary"
-                                      onClick={handleSaveEdit}
-                                    >
-                                      Guardar
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
+{isEditModalOpen && (
+  <div className="modal d-block pt-5 mt-5">
+    <div className="modal-dialog">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title">Editar Valor Personalizado</h5>
+          <button
+            type="button"
+            className="btn-close"
+            onClick={handleCloseEditModal}
+          ></button>
+        </div>
+        <div className="modal-body">
+          <div className="mb-3">
+            <label className="form-label">Nombre</label>
+            <input
+              type="text"
+              className="form-control"
+              value={editingValue?.name || ""}
+              onChange={(e) =>
+                setEditingValue({ ...editingValue, name: e.target.value })
+              }
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Intervalo (minutos)</label>
+            <input
+              type="number"
+              className="form-control"
+              value={editingValue?.interval || ""}
+              onChange={(e) =>
+                setEditingValue({
+                  ...editingValue,
+                  interval: parseInt(e.target.value, 10) || 0,
+                })
+              }
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Hora de Inicio</label>
+            <input
+              type="time"
+              className="form-control"
+              value={editingValue?.startTime || ""}
+              onChange={(e) => {
+                const startTime = e.target.value;
+                const endTime = editingValue.endTime;
+                if (startTime && endTime && endTime <= startTime) {
+                  alert("La hora de inicio no puede ser mayor o igual que la hora de fin.");
+                } else {
+                  setEditingValue({ ...editingValue, startTime: startTime });
+                }
+              }}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Hora de Fin</label>
+            <input
+              type="time"
+              className="form-control"
+              value={editingValue?.endTime || ""}
+              onChange={(e) => {
+                const startTime = editingValue.startTime;
+                const endTime = e.target.value;
+                if (startTime && endTime && endTime <= startTime) {
+                  alert("La hora de fin no puede ser menor o igual que la hora de inicio.");
+                } else {
+                  setEditingValue({ ...editingValue, endTime: endTime });
+                }
+              }}
+            />
+          </div>
+          <div className="form-check">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              checked={editingValue?.active || false}
+              onChange={(e) =>
+                setEditingValue({ ...editingValue, active: e.target.checked })
+              }
+            />
+            <label className="form-check-label">Activo</label>
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleCloseEditModal}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleSaveEdit}
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
 
                         </div>
                         <div className="modal-footer">
