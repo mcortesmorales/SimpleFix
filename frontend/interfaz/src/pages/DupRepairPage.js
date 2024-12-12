@@ -218,13 +218,13 @@ const DupRepairPage = () => {
       if (response.ok) {
         const data = await response.json();
         setDiagnosisResults(data);
-  
+
         // Ordena los datos de diagnóstico por la categoría "isDuplicate" en orden descendente
         const sortedData = [...data.markedData].sort((a, b) => {
           if (a.isDuplicate === b.isDuplicate) return 0;
           return a.isDuplicate ? -1 : 1;
         });
-  
+
         setFileData(sortedData);
       } else {
         console.error("Error al diagnosticar duplicados:", response.statusText);
@@ -235,7 +235,7 @@ const DupRepairPage = () => {
       setIsLoading(false);
     }
   };
-  
+
 
   const handleRepair = async () => {
     if (!selectedFile) return;
@@ -248,21 +248,21 @@ const DupRepairPage = () => {
         fetchFileData(selectedFile);
         setDiagnosisResults(null);
         await logsGen(
-          { 
-            event: 'Modificacion de archivo', 
-            detail: 'Se han eliminado '+ data.modificados +' elementos del archivo '+ selectedFile +'.', 
+          {
+            event: 'Modificacion de archivo',
+            detail: 'Se han eliminado ' + data.modificados + ' elementos del archivo ' + selectedFile + '.',
             state: 'Exitoso',
-            module: 'Reparacion' 
-        });
+            module: 'Reparacion'
+          });
       } else {
         console.error("Error al reparar duplicados:", response.statusText);
         await logsGen(
-          { 
-            event: 'Modificacion de archivo', 
-            detail: 'Se han intentado eliminar elementos del archivo '+ selectedFile +'.', 
-            state: 'Fallido', 
-            module: 'Reparacion' 
-        });
+          {
+            event: 'Modificacion de archivo',
+            detail: 'Se han intentado eliminar elementos del archivo ' + selectedFile + '.',
+            state: 'Fallido',
+            module: 'Reparacion'
+          });
       }
     } catch (error) {
       console.error("Error al llamar al endpoint de reparación:", error);
@@ -497,6 +497,9 @@ const DupRepairPage = () => {
               )}
 
               <div className="mt-3 text-center">
+                <button className="btn btn-secondary me-2" onClick={handleOpenConfigModal}>
+                  Configurar
+                </button>
                 <button
                   className="btn btn-warning me-2"
                   onClick={handleDiagnose}
@@ -513,12 +516,9 @@ const DupRepairPage = () => {
                 </button>
               </div>
 
-              {/* Botón para abrir el modal de configuración */}
-              <div className="text-center my-3">
-                <button className="btn btn-secondary" onClick={handleOpenConfigModal}>
-                  Configurar
-                </button>
-              </div>
+
+
+
               <div className=' d-flex align-items-center'>
 
                 {showConfigModal && (

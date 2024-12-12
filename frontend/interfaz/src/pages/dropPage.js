@@ -84,7 +84,6 @@ const DropPage = () => {
                   <td>{file.name}</td>
                   <td>{new Date(file.date * 1000).toLocaleString()}</td>
                   <td className="text-end">
-                    <button className="btn btn-info btn-sm me-2" onClick={() => handleViewFile(file.name)}>Ver</button>
                     <button className="btn btn-warning btn-sm me-2" onClick={() => handleRepairFile(file.name)}>Ir a reparar</button>
                     <button className="btn btn-danger btn-sm" onClick={() => handleDeleteFile(file.name)}>Eliminar</button>
                   </td>
